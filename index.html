@@ -6,86 +6,94 @@
   <title>BrainForge Trivia</title>
   <!-- Link to the web app manifest -->
   <link rel="manifest" href="manifest.json">
-  <!-- Load a modern font for a more polished look -->
+  <!-- Import a modern font for a more polished look -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <!-- App styling -->
+  <!-- App styling with support for light and dark themes -->
   <style>
-    /* Light theme variables */
     :root {
       --primary-color: #3f51b5;
+      --primary-color-hover: #303f9f;
       --primary-text: #ffffff;
-      --accent-color: #ff9800;
       --background: #f5f5f5;
-      --text-color: #333333;
       --card-bg: #ffffff;
-      --card-radius: 12px;
-      --shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      --card-radius: 14px;
+      --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      --text-color: #333333;
+      --secondary-bg: #e0e0e0;
+      --secondary-bg-hover: #d5d5d5;
     }
-    /* Dark theme overrides */
+    /* Dark theme variables override */
     body.dark {
+      --primary-color: #90caf9;
+      --primary-color-hover: #64a6e4;
+      --primary-text: #121212;
       --background: #121212;
+      --card-bg: #1e1e1e;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
       --text-color: #e0e0e0;
-      --card-bg: #1f1f1f;
-      --primary-color: #6750a4;
-      --primary-text: #ffffff;
-      --accent-color: #f2c94c;
-      --shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      --secondary-bg: #333333;
+      --secondary-bg-hover: #444444;
     }
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       margin: 0;
       background: var(--background);
-      color: var(--text-color);
       display: flex;
       align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease;
     }
     #app {
       width: 100%;
-      max-width: 600px;
+      max-width: 640px;
+      padding: 20px;
     }
-    h1, h2, h3, p {
-      margin: 0 0 16px;
+    h1, h2, h3 {
+      margin-top: 0;
     }
     .card {
       background: var(--card-bg);
       border-radius: var(--card-radius);
       box-shadow: var(--shadow);
       padding: 24px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
     .button {
       display: block;
       width: 100%;
       padding: 14px 18px;
-      margin: 8px 0;
+      margin: 10px 0;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       background: var(--primary-color);
       color: var(--primary-text);
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: background 0.2s ease, transform 0.1s ease;
     }
     .button:hover {
+      background: var(--primary-color-hover);
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    .button:active {
+      transform: translateY(0);
     }
     .button.secondary {
-      background: var(--accent-color);
+      background: var(--secondary-bg);
       color: var(--text-color);
     }
     .button.secondary:hover {
-      background: #ffb74d;
+      background: var(--secondary-bg-hover);
     }
     .status {
       margin-top: 12px;
       font-style: italic;
+      font-size: 14px;
     }
-    /* Header styles for home screen */
     .header {
       display: flex;
       justify-content: space-between;
@@ -93,12 +101,57 @@
       margin-bottom: 16px;
     }
     .theme-toggle {
-      border: none;
-      background: transparent;
-      color: var(--primary-color);
-      font-weight: 600;
       cursor: pointer;
-      padding: 8px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: none;
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+    .theme-toggle:hover {
+      background: var(--secondary-bg-hover);
+    }
+
+    /* Search input styling for filtering categories on the home screen */
+    .search-input {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 14px 0;
+      border-radius: 8px;
+      border: 1px solid var(--secondary-bg);
+      background: var(--background);
+      color: var(--text-color);
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    /* XP bar and streak display */
+    .xp-container {
+      margin-top: 10px;
+    }
+    .xp-bar {
+      position: relative;
+      height: 12px;
+      background: var(--secondary-bg);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: var(--primary-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .streak {
+      font-size: 14px;
+      margin-top: 6px;
     }
   </style>
 </head>
