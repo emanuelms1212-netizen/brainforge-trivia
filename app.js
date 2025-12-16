@@ -384,6 +384,16 @@ const categories = [
   }
 ];
 
+// If arithmeticQuestions is defined (loaded from arithmetic_questions.js), append a new
+// category for thousands of locally generated arithmetic problems. This enables the
+// application to hold a huge set of practice questions without bloating this file.
+if (typeof arithmeticQuestions !== 'undefined') {
+  categories.push({
+    name: 'Arithmetic Booster',
+    questions: arithmeticQuestions
+  });
+}
+
 // Key names for persisting progress and daily challenge selections in
 // localStorage. Using unique keys avoids collisions with other web apps.
 const PROGRESS_KEY = 'brainforge-progress';
@@ -569,6 +579,28 @@ const paths = [
     questions: ['LP1','LP3','DT1','DT3','DT5']
   }
 ];
+
+// Additional learning paths to provide more structured study programs. These paths
+// expand the default offerings and leverage both existing category questions
+// and the new arithmetic category. Feel free to customize these lists to fit
+// your interests or curriculum.
+paths.push({
+  name: 'Math Drill',
+  // Use the first ten arithmetic questions to introduce simple addition.
+  questions: ['AR1','AR2','AR3','AR4','AR5','AR6','AR7','AR8','AR9','AR10']
+});
+
+paths.push({
+  name: 'Real Estate Mastery',
+  // Cover all questions from the Real Estate category for a complete review.
+  questions: ['RE1','RE2','RE3','RE4','RE5']
+});
+
+paths.push({
+  name: 'History Highlights',
+  // A quick tour through notable world history and literature/philosophy questions.
+  questions: ['WH1','WH3','WH4','WH5','LP1','LP2']
+});
 
 // Load path progress from localStorage. The structure is an object where
 // keys are path names and values are indices indicating the next

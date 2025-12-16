@@ -157,6 +157,11 @@
 </head>
 <body>
   <div id="app"></div>
+  <!-- Load the large set of arithmetic questions separately. This file defines a global
+       constant (arithmeticQuestions) containing 5,000 practice problems. It must be
+       loaded before app.js so that the questions are available when categories are
+       initialized. -->
+  <script src="arithmetic_questions.js"></script>
   <script src="app.js"></script>
   <script>
     // Register the service worker for offline capability
