@@ -6,67 +6,99 @@
   <title>BrainForge Trivia</title>
   <!-- Link to the web app manifest -->
   <link rel="manifest" href="manifest.json">
+  <!-- Load a modern font for a more polished look -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <!-- App styling -->
   <style>
+    /* Light theme variables */
     :root {
       --primary-color: #3f51b5;
       --primary-text: #ffffff;
+      --accent-color: #ff9800;
       --background: #f5f5f5;
+      --text-color: #333333;
       --card-bg: #ffffff;
       --card-radius: 12px;
-      --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      --shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    /* Dark theme overrides */
+    body.dark {
+      --background: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1f1f1f;
+      --primary-color: #6750a4;
+      --primary-text: #ffffff;
+      --accent-color: #f2c94c;
+      --shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       background: var(--background);
+      color: var(--text-color);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
-      color: #333;
+      padding: 20px;
     }
     #app {
       width: 100%;
       max-width: 600px;
-      padding: 20px;
     }
-    h1, h2, h3 {
-      margin-top: 0;
+    h1, h2, h3, p {
+      margin: 0 0 16px;
     }
     .card {
       background: var(--card-bg);
       border-radius: var(--card-radius);
       box-shadow: var(--shadow);
-      padding: 20px;
+      padding: 24px;
       margin-bottom: 20px;
     }
     .button {
       display: block;
       width: 100%;
-      padding: 12px 16px;
+      padding: 14px 18px;
       margin: 8px 0;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--primary-color);
       color: var(--primary-text);
       font-size: 16px;
+      font-weight: 500;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .button:hover {
-      background: #303f9f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     .button.secondary {
-      background: #e0e0e0;
-      color: #333;
+      background: var(--accent-color);
+      color: var(--text-color);
     }
     .button.secondary:hover {
-      background: #d5d5d5;
+      background: #ffb74d;
     }
     .status {
-      margin-top: 10px;
+      margin-top: 12px;
       font-style: italic;
+    }
+    /* Header styles for home screen */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .theme-toggle {
+      border: none;
+      background: transparent;
+      color: var(--primary-color);
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px;
     }
   </style>
 </head>

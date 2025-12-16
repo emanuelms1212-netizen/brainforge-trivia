@@ -30,6 +30,27 @@ const categories = [
         options: ['Tiber', 'Nile', 'Danube', 'Seine'],
         answer: 0,
         explanation: 'Rome was built on the banks of the Tiber River in central Italy.'
+      },
+      {
+        id: 'WH3',
+        question: 'In which year did the French Revolution begin?',
+        options: ['1776', '1789', '1804', '1815'],
+        answer: 1,
+        explanation: 'The French Revolution began in 1789 with the storming of the Bastille.'
+      },
+      {
+        id: 'WH4',
+        question: 'Who was the first Roman emperor?',
+        options: ['Julius Caesar', 'Augustus', 'Nero', 'Trajan'],
+        answer: 1,
+        explanation: 'Augustus, also known as Octavian, became the first Roman emperor after the fall of the Republic.'
+      },
+      {
+        id: 'WH5',
+        question: 'Which ancient Egyptian pharaoh is credited with building the Great Pyramid of Giza?',
+        options: ['Tutankhamun', 'Ramses II', 'Khufu', 'Cleopatra'],
+        answer: 2,
+        explanation: 'Pharaoh Khufu, also known as Cheops, commissioned the Great Pyramid during his reign in the Fourth Dynasty.'
       }
     ]
   },
@@ -63,6 +84,27 @@ const categories = [
         options: ['Magnetic Resonance Imaging', 'Medical Resonance Instrument', 'Massive Radiation Investigation', 'Magnetic Radio Interference'],
         answer: 0,
         explanation: 'MRI stands for Magnetic Resonance Imaging, a technique that uses magnetic fields and radio waves to create images.'
+      },
+      {
+        id: 'SC5',
+        question: 'Which organ in the human body produces insulin?',
+        options: ['Liver', 'Kidneys', 'Pancreas', 'Spleen'],
+        answer: 2,
+        explanation: 'The pancreas produces insulin, a hormone that regulates blood sugar levels.'
+      },
+      {
+        id: 'SC6',
+        question: 'What does DNA stand for?',
+        options: ['Deoxyribonucleic Acid', 'Dinucleic Acid', 'Deoxyribose Nucleic Amide', 'Double Helix Acid'],
+        answer: 0,
+        explanation: 'DNA stands for Deoxyribonucleic Acid, the hereditary material in almost all organisms.'
+      },
+      {
+        id: 'SC7',
+        question: 'Which chemical element has the atomic number 1?',
+        options: ['Hydrogen', 'Oxygen', 'Carbon', 'Helium'],
+        answer: 0,
+        explanation: 'Hydrogen is the first element on the periodic table with atomic number 1.'
       }
     ]
   },
@@ -82,6 +124,27 @@ const categories = [
         options: ['90°', '180°', '270°', '360°'],
         answer: 1,
         explanation: 'The sum of the interior angles of any triangle is always 180°.'
+      },
+      {
+        id: 'ML3',
+        question: 'What is the square root of 49?',
+        options: ['5', '6', '7', '8'],
+        answer: 2,
+        explanation: '7 × 7 = 49, so the square root of 49 is 7.'
+      },
+      {
+        id: 'ML4',
+        question: 'What is the next prime number after 7?',
+        options: ['9', '10', '11', '13'],
+        answer: 2,
+        explanation: 'The prime numbers after 7 are 11 and 13; the next immediate prime is 11.'
+      },
+      {
+        id: 'ML5',
+        question: 'In argumentation, what is an “ad hominem” fallacy?',
+        options: ['Attacking the character of your opponent', 'Appealing to popularity', 'Presenting a false dilemma', 'Using circular reasoning'],
+        answer: 0,
+        explanation: 'An ad hominem fallacy attacks a person’s character instead of addressing the argument.'
       }
     ]
   },
@@ -115,6 +178,27 @@ const categories = [
         options: ['Interest rates', 'Stock market', 'Inflation', 'Currency exchange rates'],
         answer: 0,
         explanation: 'Duration measures the sensitivity of a bond’s price to interest rate changes.'
+      },
+      {
+        id: 'EF5',
+        question: 'What is the primary purpose of diversification in investing?',
+        options: ['To maximize returns at all costs', 'To reduce risk by spreading investments across different assets', 'To invest only in high‑risk assets', 'To avoid taxes'],
+        answer: 1,
+        explanation: 'Diversification spreads risk across different assets, helping to reduce the impact of any single investment\'s poor performance.'
+      },
+      {
+        id: 'EF6',
+        question: 'What is a yield curve in finance?',
+        options: ['A graph showing bond yields across different maturities', 'A chart of stock prices over time', 'A diagram of supply and demand', 'A depiction of interest rates vs inflation'],
+        answer: 0,
+        explanation: 'A yield curve plots the interest rates of bonds having equal credit quality but differing maturity dates.'
+      },
+      {
+        id: 'EF7',
+        question: 'Which index is commonly used as a broad measure of U.S. stock market performance?',
+        options: ['NASDAQ Composite', 'Dow Jones Industrial Average', 'S&P 500', 'Russell 2000'],
+        answer: 2,
+        explanation: 'The S&P 500 index tracks 500 large-cap U.S. companies and is widely used as a benchmark for the overall market.'
       }
     ]
   },
@@ -134,6 +218,27 @@ const categories = [
         options: ['7', '8', '9', '10'],
         answer: 2,
         explanation: 'There are nine justices on the U.S. Supreme Court: one Chief Justice and eight Associate Justices.'
+      },
+      {
+        id: 'PL3',
+        question: 'How many amendments are in the U.S. Constitution?',
+        options: ['10', '27', '34', '45'],
+        answer: 1,
+        explanation: 'There are 27 amendments to the U.S. Constitution.'
+      },
+      {
+        id: 'PL4',
+        question: 'What is the legal principle that courts should follow precedent?',
+        options: ['Habeas corpus', 'Stare decisis', 'Ex post facto', 'Mens rea'],
+        answer: 1,
+        explanation: 'Stare decisis is the doctrine that courts should follow precedent to ensure stability and predictability in law.'
+      },
+      {
+        id: 'PL5',
+        question: 'Who is often called the “Father of the U.S. Constitution”?',
+        options: ['George Washington', 'Alexander Hamilton', 'James Madison', 'Benjamin Franklin'],
+        answer: 2,
+        explanation: 'James Madison is called the “Father of the Constitution” for his pivotal role in drafting and promoting the U.S. Constitution.'
       }
     ]
   },
@@ -167,6 +272,27 @@ const categories = [
         options: ['Purim', 'Hanukkah', 'Shavuot', 'Tisha B’Av'],
         answer: 1,
         explanation: 'Hanukkah celebrates the Maccabean victory and the miracle of the oil that burned for eight days.'
+      },
+      {
+        id: 'JS5',
+        question: 'What is the central declaration of faith in Judaism recited morning and night?',
+        options: ['Amidah', 'Shema', 'Kaddish', 'Birkat Hamazon'],
+        answer: 1,
+        explanation: 'The Shema (“Hear, O Israel…”) is the central declaration of faith recited daily.'
+      },
+      {
+        id: 'JS6',
+        question: 'The Hebrew Bible is divided into three sections: Torah, Nevi\'im, and what?',
+        options: ['Gemara', 'Ketuvim', 'Mishnah', 'Talmud'],
+        answer: 1,
+        explanation: 'The Hebrew Bible (Tanakh) consists of Torah (Law), Nevi\'im (Prophets), and Ketuvim (Writings).'
+      },
+      {
+        id: 'JS7',
+        question: 'During which Jewish holiday is the story of Esther read?',
+        options: ['Hanukkah', 'Passover', 'Purim', 'Sukkot'],
+        answer: 2,
+        explanation: 'The Book of Esther is read during Purim, celebrating the deliverance of the Jews in ancient Persia.'
       }
     ]
   },
@@ -186,6 +312,27 @@ const categories = [
         options: ['Moby‑Dick', 'War and Peace', 'The Great Gatsby', 'Crime and Punishment'],
         answer: 0,
         explanation: 'The opening line of Herman Melville’s classic novel “Moby‑Dick” is “Call me Ishmael.”'
+      },
+      {
+        id: 'LP3',
+        question: 'Which ancient philosopher wrote “The Republic”?',
+        options: ['Aristotle', 'Plato', 'Socrates', 'Pythagoras'],
+        answer: 1,
+        explanation: 'Plato wrote “The Republic,” outlining his views on justice and the ideal state.'
+      },
+      {
+        id: 'LP4',
+        question: 'Who said “The unexamined life is not worth living”?',
+        options: ['Plato', 'Socrates', 'Aristotle', 'Confucius'],
+        answer: 1,
+        explanation: 'Socrates famously declared that “The unexamined life is not worth living” during his trial as recorded by Plato.'
+      },
+      {
+        id: 'LP5',
+        question: 'In which novel does the line “All animals are equal, but some animals are more equal than others” appear?',
+        options: ['Animal Farm', '1984', 'Brave New World', 'Lord of the Flies'],
+        answer: 0,
+        explanation: 'George Orwell’s novella “Animal Farm” uses this line to satirize the hypocrisy of totalitarian regimes.'
       }
     ]
   },
@@ -205,6 +352,67 @@ const categories = [
         options: ['Inertia', 'Gravity', 'Momentum', 'Acceleration'],
         answer: 0,
         explanation: 'Inertia is Newton’s first law of motion describing an object’s resistance to changes in its state of motion.'
+      },
+      {
+        id: 'DT3',
+        question: 'What thought experiment illustrates the problem of quantum superposition using a cat?',
+        options: ['The Twin Paradox', 'Schrödinger’s Cat', 'Maxwell’s Demon', 'Laplace’s Demon'],
+        answer: 1,
+        explanation: 'Schrödinger’s Cat is a thought experiment that questions the interpretation of quantum mechanics by imagining a cat that is simultaneously alive and dead until observed.'
+      },
+      {
+        id: 'DT4',
+        question: 'Which branch of ethics is focused on the consequences of actions rather than the actions themselves?',
+        options: ['Deontological ethics', 'Virtue ethics', 'Utilitarianism', 'Relativism'],
+        answer: 2,
+        explanation: 'Utilitarianism judges the morality of an action based on its overall utility or happiness produced.'
+      },
+      {
+        id: 'DT5',
+        question: 'Which philosopher coined the phrase “I think, therefore I am”?',
+        options: ['Immanuel Kant', 'René Descartes', 'David Hume', 'Blaise Pascal'],
+        answer: 1,
+        explanation: 'René Descartes used the phrase “Cogito, ergo sum” to establish existence based on the act of thinking.'
+      }
+    ]
+  },
+  {
+    name: 'Real Estate',
+    questions: [
+      {
+        id: 'RE1',
+        question: 'What does NOI stand for in real estate investing?',
+        options: ['Net Operating Income', 'Net Overhead Investment', 'Nominal Operating Income', 'New Occupancy Indicator'],
+        answer: 0,
+        explanation: 'NOI stands for Net Operating Income and represents a property’s revenue after operating expenses but before debt service.'
+      },
+      {
+        id: 'RE2',
+        question: 'What does a capitalization rate (cap rate) measure?',
+        options: ['Return on equity investment', 'Risk level of a property', 'Ratio of net income to purchase price', 'Property appreciation rate'],
+        answer: 2,
+        explanation: 'The cap rate is the ratio of a property’s net operating income to its purchase price, indicating the expected return if paid in cash.'
+      },
+      {
+        id: 'RE3',
+        question: 'Which lease type makes the tenant responsible for property taxes, insurance, and maintenance?',
+        options: ['Gross lease', 'Triple‑net lease', 'Percentage lease', 'Modified gross lease'],
+        answer: 1,
+        explanation: 'In a triple‑net (NNN) lease, the tenant pays the property’s taxes, insurance, and maintenance in addition to rent.'
+      },
+      {
+        id: 'RE4',
+        question: 'What does DSCR stand for in real estate finance?',
+        options: ['Debt Service Coverage Ratio', 'Direct Sales Conversion Rate', 'Development Site Control Requirement', 'Dividend Stock Comparison Ratio'],
+        answer: 0,
+        explanation: 'DSCR stands for Debt Service Coverage Ratio and measures the cash flow available to pay current debt obligations.'
+      },
+      {
+        id: 'RE5',
+        question: 'Which class of commercial property typically refers to newly built, high‑quality buildings in prime locations?',
+        options: ['Class A', 'Class B', 'Class C', 'Class D'],
+        answer: 0,
+        explanation: 'Class A properties are newly constructed or recently renovated buildings with premium amenities in desirable locations.'
       }
     ]
   }
@@ -214,6 +422,38 @@ const categories = [
 // localStorage. Using unique keys avoids collisions with other web apps.
 const PROGRESS_KEY = 'brainforge-progress';
 const DAILY_KEY = 'brainforge-daily';
+const THEME_KEY = 'brainforge-theme';
+
+// Load the saved theme preference from localStorage. Returns true if dark mode.
+function loadTheme() {
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    return stored === 'dark';
+  } catch (_) {
+    return false;
+  }
+}
+
+// Apply the theme by toggling the 'dark' class on the body element
+function applyTheme(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark');
+  } else {
+    document.body.classList.remove('dark');
+  }
+}
+
+// Toggle between light and dark themes and update localStorage
+function toggleTheme() {
+  const isDark = document.body.classList.contains('dark');
+  const newIsDark = !isDark;
+  applyTheme(newIsDark);
+  localStorage.setItem(THEME_KEY, newIsDark ? 'dark' : 'light');
+  const toggleBtn = document.getElementById('themeToggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = newIsDark ? 'Light Mode' : 'Dark Mode';
+  }
+}
 
 // Modes: determines whether the user is playing a single category or a daily
 // challenge. When in 'category' mode the indices refer to categories array.
@@ -349,20 +589,38 @@ function showCategories() {
   app.innerHTML = '';
   const container = document.createElement('div');
   container.className = 'card';
-  const heading = document.createElement('h1');
-  heading.textContent = 'BrainForge Trivia';
-  container.appendChild(heading);
+  // Header with title, stats button and theme toggle
+  const header = document.createElement('div');
+  header.className = 'header';
+  const title = document.createElement('h1');
+  title.textContent = 'BrainForge Trivia';
+  header.appendChild(title);
+  const buttonGroup = document.createElement('div');
+  // Stats button
+  const statsBtn = document.createElement('button');
+  statsBtn.className = 'theme-toggle';
+  statsBtn.textContent = 'View Stats';
+  statsBtn.addEventListener('click', showStats);
+  buttonGroup.appendChild(statsBtn);
+  // Theme toggle button
+  const themeBtn = document.createElement('button');
+  themeBtn.className = 'theme-toggle';
+  themeBtn.id = 'themeToggle';
+  themeBtn.addEventListener('click', toggleTheme);
+  buttonGroup.appendChild(themeBtn);
+  header.appendChild(buttonGroup);
+  container.appendChild(header);
   const subheading = document.createElement('p');
   subheading.textContent = 'Select a category to begin:';
   container.appendChild(subheading);
-  // Insert a button to start the daily challenge. The daily challenge pulls
-  // from all categories and prioritizes questions you haven\'t mastered yet.
+  // Daily challenge button
   const dailyBtn = document.createElement('button');
   dailyBtn.className = 'button';
   dailyBtn.style.marginBottom = '12px';
   dailyBtn.textContent = 'Daily Challenge';
   dailyBtn.addEventListener('click', startDailyChallenge);
   container.appendChild(dailyBtn);
+  // Category buttons
   categories.forEach((cat, index) => {
     const button = document.createElement('button');
     button.className = 'button';
@@ -371,6 +629,12 @@ function showCategories() {
     container.appendChild(button);
   });
   app.appendChild(container);
+  // Update theme toggle label to reflect current theme
+  const isDark = document.body.classList.contains('dark');
+  const toggleBtn = document.getElementById('themeToggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
 // Start a quiz for the given category index
@@ -497,5 +761,59 @@ function checkAnswer(selectedIndex) {
   app.appendChild(card);
 }
 
-// Initialize the view when the DOM has loaded
-document.addEventListener('DOMContentLoaded', showCategories);
+// Display a summary of progress for each category, including counts of new, learning and mastered questions.
+function showStats() {
+  const progress = loadProgress();
+  app.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'card';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Your Progress';
+  card.appendChild(heading);
+  categories.forEach(cat => {
+    let newCount = 0;
+    let learningCount = 0;
+    let masteredCount = 0;
+    cat.questions.forEach(q => {
+      const entry = progress[q.id];
+      const mastery = entry ? entry.mastery : 0;
+      if (mastery === 2) masteredCount++;
+      else if (mastery === 1) learningCount++;
+      else newCount++;
+    });
+    const section = document.createElement('div');
+    const title = document.createElement('h3');
+    title.textContent = cat.name;
+    section.appendChild(title);
+    const counts = document.createElement('p');
+    counts.innerHTML =
+      `<span style="color: var(--primary-color); font-weight:600;">Mastered:</span> ${masteredCount} &nbsp; ` +
+      `<span style="color: var(--accent-color); font-weight:600;">Learning:</span> ${learningCount} &nbsp; ` +
+      `<span style="color: var(--text-color); font-weight:600;">New:</span> ${newCount}`;
+    section.appendChild(counts);
+    card.appendChild(section);
+  });
+  // Reset progress button
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'button secondary';
+  resetBtn.textContent = 'Reset Progress';
+  resetBtn.addEventListener('click', () => {
+    localStorage.removeItem(PROGRESS_KEY);
+    showStats();
+  });
+  card.appendChild(resetBtn);
+  // Return home button
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'button';
+  homeBtn.textContent = 'Return to Home';
+  homeBtn.addEventListener('click', showCategories);
+  card.appendChild(homeBtn);
+  app.appendChild(card);
+}
+
+// On DOM load, apply stored theme and show categories
+document.addEventListener('DOMContentLoaded', () => {
+  const isDark = loadTheme();
+  applyTheme(isDark);
+  showCategories();
+});
