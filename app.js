@@ -1030,6 +1030,75 @@ function showPaths() {
   app.appendChild(card);
 }
 
+// Fetch additional questions from the Open Trivia Database. This helper returns
+// an array of question objects formatted like our built‑in categories. It uses
+// the public Open Trivia DB API to retrieve random multiple‑choice questions.
+async function fetchOpenTrivia(amount = 10) {
+  try {
+    const response = await fetch(`https://opentdb.com/api.php?amount=${amount}&type=multiple`);
+    const data = await response.json();
+    if (!data || !Array.isArray(data.results)) {
+      return [];
+    }
+    // Helper to decode HTML entities from the API response
+    const decode = (str) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(str, 'text/html');
+      return doc.documentElement.textContent;
+    };
+    return data.results.map((item, idx) => {
+      // Combine correct and incorrect answers, then shuffle
+      const allOptions = [...item.incorrect_answers.map(decode), decode(item.correct_answer)];
+      // Shuffle options
+      for (let i = allOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
+      }
+      // Determine the index of the correct answer after shuffle
+      const answerIndex = allOptions.indexOf(decode(item.correct_answer));
+      return {
+        id: `OT${Date.now()}-${idx}`,
+        question: decode(item.question),
+        options: allOptions,
+        answer: answerIndex,
+        // Use the correct answer as a simple explanation
+        explanation: decode(item.correct_answer)
+      };
+    });
+  } catch (err) {
+    console.error('Failed to fetch from OpenTriviaDB', err);
+    return [];
+  }
+}
+
+// Start a quiz using questions fetched from the Open Trivia DB. This function
+// retrieves a batch of questions and then enters quiz mode as if they were a
+// regular category. Each call fetches a new set of questions so users can play
+// indefinitely. XP is awarded in the same way as built‑in questions.
+async function startOpenTrivia() {
+  currentMode = 'category';
+  app.innerHTML = '';
+  const loadingCard = document.createElement('div');
+  loadingCard.className = 'card';
+  const loadingText = document.createElement('p');
+  loadingText.textContent = 'Fetching questions…';
+  loadingCard.appendChild(loadingText);
+  app.appendChild(loadingCard);
+  // Attempt to fetch 15 questions from the API
+  const fetchedQuestions = await fetchOpenTrivia(15);
+  if (!fetchedQuestions.length) {
+    loadingText.textContent = 'Unable to load questions. Please try again later.';
+    return;
+  }
+  // Use a temporary category object for this session
+  currentCategoryIndex = null;
+  questions = fetchedQuestions;
+  currentQuestionIndex = 0;
+  score = 0;
+  // Replace the loading UI with the first question
+  showQuestion();
+}
+
 // Start or continue a specific learning path
 function startPath(pathIndex) {
   currentMode = 'path';
@@ -1251,6 +1320,13 @@ function showCategories() {
   pathsBtn.textContent = 'Learning Paths';
   pathsBtn.addEventListener('click', showPaths);
   container.appendChild(pathsBtn);
+
+  // Button to start a session with random questions fetched from Open Trivia DB
+  const openTriviaBtn = document.createElement('button');
+  openTriviaBtn.className = 'button';
+  openTriviaBtn.textContent = 'Open Trivia';
+  openTriviaBtn.addEventListener('click', startOpenTrivia);
+  container.appendChild(openTriviaBtn);
   // Search input for filtering categories
   const searchInput = document.createElement('input');
   searchInput.className = 'search-input';
