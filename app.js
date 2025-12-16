@@ -384,14 +384,29 @@ const categories = [
   }
 ];
 
-// If arithmeticQuestions is defined (loaded from arithmetic_questions.js), append a new
-// category for thousands of locally generated arithmetic problems. This enables the
-// application to hold a huge set of practice questions without bloating this file.
-if (typeof arithmeticQuestions !== 'undefined') {
-  categories.push({
-    name: 'Arithmetic Booster',
-    questions: arithmeticQuestions
-  });
+// If a large external trivia dataset is loaded (trivia_questions.js), dynamically
+// append each category and its questions to the categories array. This allows
+// the application to support thousands of trivia questions across many topics
+// without hard‑coding them directly in this file. Each property of the
+// triviaQuestions object represents a category name with an array of question
+// objects following the same schema used by built‑in questions. See
+// trivia_questions.js for details.
+if (typeof triviaQuestions !== 'undefined') {
+  for (const catName in triviaQuestions) {
+    if (Array.isArray(triviaQuestions[catName])) {
+      categories.push({
+        name: catName,
+        questions: triviaQuestions[catName]
+      });
+    }
+  }
+  // Remove the legacy Math & Logic category if it exists, since the user has
+  // requested to eliminate all math questions. The dynamically loaded trivia
+  // dataset provides ample general knowledge questions instead.
+  const mlIndex = categories.findIndex(c => c.name === 'Math & Logic');
+  if (mlIndex !== -1) {
+    categories.splice(mlIndex, 1);
+  }
 }
 
 // Key names for persisting progress and daily challenge selections in
@@ -582,12 +597,14 @@ const paths = [
 
 // Additional learning paths to provide more structured study programs. These paths
 // expand the default offerings and leverage both existing category questions
-// and the new arithmetic category. Feel free to customize these lists to fit
+// and the large trivia dataset. Feel free to customize these lists to fit
 // your interests or curriculum.
+// General Knowledge path: sample a handful of questions from the imported trivia dataset.
 paths.push({
-  name: 'Math Drill',
-  // Use the first ten arithmetic questions to introduce simple addition.
-  questions: ['AR1','AR2','AR3','AR4','AR5','AR6','AR7','AR8','AR9','AR10']
+  name: 'General Knowledge Marathon',
+  // Use the first twenty questions from the large trivia set as a sampler. These IDs
+  // correspond to the generated TQ IDs and provide a variety of categories.
+  questions: ['TQ1','TQ2','TQ3','TQ4','TQ5','TQ6','TQ7','TQ8','TQ9','TQ10','TQ11','TQ12','TQ13','TQ14','TQ15','TQ16','TQ17','TQ18','TQ19','TQ20']
 });
 
 paths.push({

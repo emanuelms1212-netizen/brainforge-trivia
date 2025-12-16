@@ -162,7 +162,10 @@
        loaded before app.js so that the questions are available when categories are
        initialized. -->
   <script src="arithmetic_questions.js"></script>
-  <script src="app.js"></script>
+    <!-- Load the large trivia questions dataset -->
+    <script src="trivia_questions.js"></script>
+    <!-- Main application logic -->
+    <script src="app.js"></script>
   <script>
     // Register the service worker for offline capability
     if ('serviceWorker' in navigator) {
