@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Road to Ruin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset + Variables ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:    #08080b;
+  --bg2:   #111118;
+  --card:  #16161f;
+  --bdr:   #25253a;
+  --orange:#f06000;
+  --green: #2eff10;
+  --yellow:#ffcc00;
+  --red:   #ff2222;
+  --dim:   #55556a;
+  --text:  #c8c8d8;
+  --hh:    64px;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;line-height:1.4;
+  min-height:100vh;overflow-x:hidden;
+}
+
+/* ── HUD ───────────────────────────────────────────────── */
+#hud{
+  position:fixed;top:0;left:0;right:0;height:var(--hh);
+  background:rgba(8,8,11,.96);border-bottom:2px solid var(--orange);
+  display:flex;align-items:center;gap:18px;padding:0 18px;
+  z-index:200;backdrop-filter:blur(6px);
+  transition:opacity .3s,transform .3s;
+}
+#hud.hidden{opacity:0;pointer-events:none;transform:translateY(-100%)}
+.hseg{display:flex;flex-direction:column;align-items:center;gap:1px;white-space:nowrap}
+.hlbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.hval{font-family:'Share Tech Mono',monospace;font-size:21px;color:var(--text);font-weight:bold}
+.hval.o{color:var(--orange)}.hval.y{color:var(--yellow)}.hval.g{color:var(--green)}
+#hpwrap{flex:1;min-width:80px;align-items:stretch}
+#hpbar{height:14px;background:#1a0000;border-radius:7px;border:1px solid #440000;overflow:hidden}
+#hpfill{height:100%;width:100%;background:linear-gradient(90deg,var(--red) 0%,#ff6644 75%,#ffaa22 100%);border-radius:7px;transition:width .5s ease}
+#hptxt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);text-align:right;margin-top:2px}
+
+/* ── Screens ───────────────────────────────────────────── */
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:calc(var(--hh) + 24px) 16px 40px;animation:fadeIn .35s ease both}
+.screen.active{display:flex}
+#s-title{padding-top:0;justify-content:center;gap:0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Title ─────────────────────────────────────────────── */
+#title-cv{width:100%;max-width:640px;display:block;border-bottom:2px solid var(--orange)}
+.gtitle{
+  font-family:'Russo One',sans-serif;
+  font-size:clamp(44px,11vw,88px);color:var(--orange);text-transform:uppercase;
+  letter-spacing:6px;text-align:center;margin:10px 0 4px;
+  text-shadow:0 0 40px rgba(240,96,0,.55),0 2px 0 #000;
+}
+.gsub{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:28px}
+
+/* ── Buttons ───────────────────────────────────────────── */
+.btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+  letter-spacing:3px;text-transform:uppercase;border:none;border-radius:5px;
+  padding:14px 40px;cursor:pointer;transition:transform .15s,box-shadow .15s,filter .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--orange);color:#000}
+.btn-p:hover{filter:brightness(1.15);box-shadow:0 4px 24px rgba(240,96,0,.45);transform:translateY(-2px)}
+.btn-g{background:transparent;color:var(--green);border:2px solid var(--green)}
+.btn-g:hover{background:rgba(46,255,16,.08);box-shadow:0 0 14px rgba(46,255,16,.2)}
+
+/* ── Trivia ─────────────────────────────────────────────── */
+#s-trivia{gap:14px;max-width:660px;margin:0 auto;width:100%}
+.qmeta{width:100%;display:flex;justify-content:space-between;align-items:center}
+.qprog{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--dim)}
+.qdiff{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:3px;text-transform:uppercase}
+.qdiff.easy{color:var(--green);border:1px solid var(--green)}
+.qdiff.medium{color:var(--yellow);border:1px solid var(--yellow)}
+.qdiff.hard{color:var(--red);border:1px solid var(--red)}
+.qcard{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:24px}
+.qcat{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.qtxt{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:600;color:#fff;line-height:1.4;margin-bottom:16px;min-height:60px}
+.timerbar{height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.timerfill{height:100%;width:100%;border-radius:3px;background:var(--green);transition:width 1s linear,background .5s}
+.timerfill.warn{background:var(--yellow)}.timerfill.danger{background:var(--red)}
+.timerlbl{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);text-align:right;margin-bottom:18px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.abtn{
+  background:rgba(255,255,255,.04);border:2px solid var(--bdr);border-radius:8px;
+  padding:14px 12px;color:var(--text);
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;
+  text-align:left;cursor:pointer;line-height:1.3;
+  transition:border-color .2s,background .2s;
+}
+.abtn:hover:not(:disabled){border-color:var(--orange);background:rgba(240,96,0,.08)}
+.abtn.correct{border-color:var(--green)!important;background:rgba(46,255,16,.12)!important;color:var(--green)!important}
+.abtn.wrong{border-color:var(--red)!important;background:rgba(255,34,34,.12)!important;color:var(--red)!important}
+.abtn:disabled{cursor:default}
+.qfb{min-height:36px;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:bold;border-radius:6px;padding:6px 12px;text-align:center}
+.qfb.correct{color:var(--green)}.qfb.wrong{color:var(--red)}
+
+/* ── Wave ───────────────────────────────────────────────── */
+#s-wave{gap:16px;width:100%;max-width:840px;margin:0 auto}
+.wtitle{font-family:'Russo One',sans-serif;font-size:28px;color:var(--orange);letter-spacing:4px;text-transform:uppercase;text-align:center}
+#wave-cv{width:100%;border:2px solid var(--orange);border-radius:8px;display:block;image-rendering:pixelated}
+.wstats{display:flex;gap:32px;justify-content:center;margin-top:4px}
+.wst{text-align:center}
+.wstv{font-family:'Russo One',sans-serif;font-size:30px}
+.wstv.g{color:var(--green)}.wstv.y{color:var(--yellow)}.wstv.r{color:var(--red)}
+.wstl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+#wstatus{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--dim);text-align:center;letter-spacing:2px}
+
+/* ── Shop ───────────────────────────────────────────────── */
+#s-shop{gap:14px;width:100%;max-width:680px;margin:0 auto}
+.stitle{font-family:'Russo One',sans-serif;font-size:28px;color:var(--orange);letter-spacing:4px;text-transform:uppercase;text-align:center}
+.scoinlbl{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--yellow);text-align:center}
+#car-cv{width:100%;max-width:520px;border:1px solid var(--bdr);border-radius:8px;display:block}
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.ucard{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s}
+.ucard.owned{border-color:#2a2a42}
+.ucard.maxed{border-color:var(--yellow)}
+.utop{display:flex;align-items:center;gap:10px}
+.uicon{font-size:28px;line-height:1}
+.uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:1px}
+.udesc{font-size:13px;color:var(--dim);line-height:1.3}
+.utiers{display:flex;gap:5px}
+.tpip{width:18px;height:6px;border-radius:3px;background:var(--bdr);border:1px solid #333;transition:background .3s}
+.tpip.on{background:var(--orange);border-color:var(--orange)}
+.tpip.mx{background:var(--yellow);border-color:var(--yellow)}
+.ubtn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:5px;padding:8px 12px;cursor:pointer;margin-top:2px;transition:filter .2s,transform .1s}
+.ubtn.buy{background:var(--green);color:#000}
+.ubtn.buy:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.ubtn.broke{background:#111120;color:var(--dim);border:1px solid var(--bdr);cursor:not-allowed}
+.ubtn.full{background:rgba(255,204,0,.12);color:var(--yellow);border:1px solid var(--yellow);cursor:default}
+
+/* ── Game Over ──────────────────────────────────────────── */
+#s-over{justify-content:center;min-height:100vh;gap:20px;text-align:center;padding-top:var(--hh)}
+.gotitle{font-family:'Russo One',sans-serif;font-size:clamp(54px,14vw,96px);color:var(--red);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 40px rgba(255,34,34,.5),0 2px 0 #000}
+.gosub{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--dim);letter-spacing:2px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:340px;width:100%}
+.sbox{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:16px}
+.sbv{font-family:'Russo One',sans-serif;font-size:34px;color:var(--orange)}
+.sbl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+
+/* ── Floating coin ──────────────────────────────────────── */
+.fcoin{position:fixed;font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:bold;pointer-events:none;z-index:999;animation:floatUp 1.4s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-70px) scale(.8)}}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media(max-width:500px){
+  .agrid{grid-template-columns:1fr}
+  .ugrid{grid-template-columns:1fr}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .qtxt{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HUD ═══ -->
+<div id="hud" class="hidden">
+  <div class="hseg"><div class="hlbl">Level</div><div class="hval o" id="h-lvl">1</div></div>
+  <div class="hseg"><div class="hlbl">Wave</div><div class="hval" id="h-wave">1</div></div>
+  <div class="hseg hpwrap" id="hpwrap" style="flex:1;align-items:stretch">
+    <div class="hlbl" style="text-align:left">HP</div>
+    <div id="hpbar"><div id="hpfill"></div></div>
+    <div id="hptxt">100 / 100</div>
+  </div>
+  <div class="hseg"><div class="hlbl">Coins</div><div class="hval y" id="h-coins">50</div></div>
+</div>
+
+<!-- ═══ TITLE SCREEN ═══ -->
+<div class="screen active" id="s-title">
+  <canvas id="title-cv" height="170"></canvas>
+  <div class="gtitle">Road to Ruin</div>
+  <div class="gsub">Answer trivia &bull; Survive the waves &bull; Upgrade your rig</div>
+  <button class="btn btn-p" onclick="Game.start()">Start Game</button>
+  <p style="margin-top:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);max-width:440px;text-align:center;line-height:1.9">
+    5 trivia questions per level &bull; wrong answers cost HP<br>
+    kill zombies between rounds &bull; upgrade and survive
+  </p>
+</div>
+
+<!-- ═══ TRIVIA SCREEN ═══ -->
+<div class="screen" id="s-trivia">
+  <div class="qmeta" style="width:100%;max-width:660px">
+    <span class="qprog" id="q-prog">Q 1 / 5</span>
+    <span class="qdiff easy" id="q-diff">EASY</span>
+  </div>
+  <div class="qcard" style="max-width:660px">
+    <div class="qcat" id="q-cat">General Knowledge</div>
+    <div class="qtxt" id="q-txt">Loading question…</div>
+    <div class="timerbar"><div class="timerfill" id="t-fill"></div></div>
+    <div class="timerlbl" id="t-lbl">15s</div>
+    <div class="agrid" id="a-grid"></div>
+    <div class="qfb" id="q-fb"></div>
+  </div>
+</div>
+
+<!-- ═══ WAVE SCREEN ═══ -->
+<div class="screen" id="s-wave">
+  <div class="wtitle" id="w-title">Wave 1</div>
+  <canvas id="wave-cv"></canvas>
+  <div class="wstats">
+    <div class="wst"><div class="wstv g" id="ws-kills">0</div><div class="wstl">Kills</div></div>
+    <div class="wst"><div class="wstv y" id="ws-coins">+0</div><div class="wstl">Coins Earned</div></div>
+    <div class="wst"><div class="wstv r" id="ws-dmg">0</div><div class="wstl">Damage Taken</div></div>
+  </div>
+  <div id="wstatus">Incoming…</div>
+</div>
+
+<!-- ═══ SHOP SCREEN ═══ -->
+<div class="screen" id="s-shop">
+  <div class="stitle">Upgrade Shop</div>
+  <div class="scoinlbl" id="shop-coins">&#9881; Coins: 50</div>
+  <canvas id="car-cv" height="160"></canvas>
+  <div class="ugrid" id="ugrid"></div>
+  <button class="btn btn-p" id="shop-cont" onclick="Game.nextLevel()">Continue to Level 2</button>
+</div>
+
+<!-- ═══ GAME OVER SCREEN ═══ -->
+<div class="screen" id="s-over">
+  <div class="gotitle">Game Over</div>
+  <div class="gosub">Your rig didn't make it.</div>
+  <div class="sgrid">
+    <div class="sbox"><div class="sbv" id="go-lvl">0</div><div class="sbl">Levels</div></div>
+    <div class="sbox"><div class="sbv" id="go-kills">0</div><div class="sbl">Total Kills</div></div>
+    <div class="sbox"><div class="sbv" id="go-acc">0%</div><div class="sbl">Accuracy</div></div>
+    <div class="sbox"><div class="sbv" id="go-upg">0</div><div class="sbl">Upgrades</div></div>
+  </div>
+  <button class="btn btn-p" onclick="location.reload()">Play Again</button>
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════════════════════ */
+const GS = {
+  phase:         'title',
+  level:         1,
+  hp:            100,
+  maxHp:         100,
+  coins:         50,
+  wave:          0,
+  questionIndex: 0,
+  upgrades: { nitro:0, ram:0, turret:0, flame:0, armor:0, emp:0 },
+  stats:    { kills:0, correct:0, total:0, levelsCompleted:0 },
+  // runtime
+  questions: [],
+  qCache:    {},
+  waveKills: 0,
+  waveCoins: 0,
+  waveDmg:   0,
+};
+
+/* ══════════════════════════════════════════════════════════
+   UPGRADE DEFINITIONS
+══════════════════════════════════════════════════════════ */
+const UPGRADES = {
+  nitro:  { name:'Nitro Boost',   icon:'🔥', desc:'+25% speed/tier — more zombie kills per wave', costs:[30,60,100] },
+  ram:    { name:'Spike Ram',     icon:'⚡', desc:'Front spikes deal +5 contact damage per tier',  costs:[25,50,80]  },
+  turret: { name:'Roof Turret',   icon:'🔫', desc:'Auto-fires +3 bullets per tier during waves',   costs:[40,70,120] },
+  flame:  { name:'Flame Thrower', icon:'🌋', desc:'Area damage kills zombie clusters per tier',    costs:[50,90,150] },
+  armor:  { name:'Armor Plating', icon:'🛡️', desc:'Cuts damage from wrong answers &amp; zombie hits',  costs:[35,65,100] },
+  emp:    { name:'EMP Mine',      icon:'💥', desc:'Stuns +2 zombies at wave start per tier',        costs:[45,80,130] },
+};
+
+/* ══════════════════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════════════════ */
+const $  = id => document.getElementById(id);
+const mk = (tag,cls,html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!==undefined)e.innerHTML=html; return e; };
+
+function shuffle(a){ const r=[...a]; for(let i=r.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [r[i],r[j]]=[r[j],r[i]]; } return r; }
+function decHTML(s){ const t=document.createElement('textarea'); t.innerHTML=s; return t.value; }
+function getDiff(){ return GS.level<=3?'easy':GS.level<=7?'medium':'hard'; }
+
+/* ══════════════════════════════════════════════════════════
+   TRIVIA API
+══════════════════════════════════════════════════════════ */
+const FALLBACK = [
+  {cat:'General',   q:'Capital of France?',                    c:'Paris',            a:['Paris','London','Berlin','Madrid']},
+  {cat:'Science',   q:'Chemical formula for water?',           c:'H₂O',              a:['H₂O','CO₂','NaCl','O₂']},
+  {cat:'History',   q:'Year World War II ended?',              c:'1945',             a:['1945','1939','1941','1950']},
+  {cat:'Math',      q:'Square root of 144?',                   c:'12',               a:['12','11','13','14']},
+  {cat:'Geography', q:'Largest ocean on Earth?',               c:'Pacific',          a:['Pacific','Atlantic','Indian','Arctic']},
+  {cat:'Science',   q:'Planets in our solar system?',          c:'8',                a:['8','7','9','10']},
+  {cat:'History',   q:'First US President?',                   c:'George Washington',a:['George Washington','Lincoln','Jefferson','Adams']},
+  {cat:'General',   q:'Sides on a hexagon?',                   c:'6',                a:['6','5','7','8']},
+  {cat:'Science',   q:'Closest planet to the Sun?',            c:'Mercury',          a:['Mercury','Venus','Mars','Jupiter']},
+  {cat:'General',   q:'Language with most native speakers?',   c:'Mandarin Chinese', a:['Mandarin Chinese','Spanish','English','Hindi']},
+  {cat:'History',   q:'Year the Berlin Wall fell?',            c:'1989',             a:['1989','1991','1985','1993']},
+  {cat:'Science',   q:'Speed of light (approx) in km/s?',     c:'300,000',          a:['300,000','150,000','500,000','1,000,000']},
+  {cat:'General',   q:'How many continents on Earth?',         c:'7',                a:['7','6','5','8']},
+  {cat:'Math',      q:'What is π (pi) rounded to 2 decimals?', c:'3.14',             a:['3.14','3.16','3.12','3.18']},
+  {cat:'Geography', q:'Longest river in the world?',           c:'Nile',             a:['Nile','Amazon','Yangtze','Mississippi']},
+];
+
+async function fetchQuestions(){
+  const diff=getDiff(), key=`${diff}_${GS.level}`;
+  if(GS.qCache[key]) return GS.qCache[key];
+  try {
+    const res  = await fetch(`https://opentdb.com/api.php?amount=5&type=multiple&difficulty=${diff}`);
+    const data = await res.json();
+    if(data.response_code===0 && data.results.length){
+      const qs = data.results.map(q=>({
+        cat:     decHTML(q.category),
+        q:       decHTML(q.question),
+        c:       decHTML(q.correct_answer),
+        a:       shuffle([decHTML(q.correct_answer),...q.incorrect_answers.map(decHTML)]),
+        diff:    q.difficulty,
+      }));
+      GS.qCache[key]=qs; return qs;
+    }
+  } catch(e){}
+  return shuffle(FALLBACK).slice(0,5);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN / HUD
+══════════════════════════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  GS.phase=id.replace('s-','');
+  $('hud').classList.toggle('hidden', id==='s-title');
+}
+
+function updateHUD(){
+  $('h-lvl').textContent   = GS.level;
+  $('h-wave').textContent  = GS.wave;
+  $('h-coins').textContent = GS.coins;
+  const pct = Math.max(0,(GS.hp/GS.maxHp)*100);
+  $('hpfill').style.width  = pct+'%';
+  $('hptxt').textContent   = `${Math.max(0,GS.hp)} / ${GS.maxHp}`;
+}
+
+function floatCoins(n, positive=true){
+  const d=document.createElement('div');
+  d.className='fcoin';
+  d.textContent=(positive?'+':'')+n+' 🪙';
+  d.style.color=positive?'var(--yellow)':'var(--red)';
+  const r=$('hud').getBoundingClientRect();
+  d.style.right='18px'; d.style.top=(r.bottom+6)+'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1500);
+}
+
+/* ══════════════════════════════════════════════════════════
+   TITLE ANIMATION
+══════════════════════════════════════════════════════════ */
+(function titleAnim(){
+  const cv=$('title-cv'), ctx=cv.getContext('2d');
+  let f=0;
+  function resize(){ cv.width=cv.offsetWidth||Math.min(640,window.innerWidth-32); cv.height=170; }
+  resize(); window.addEventListener('resize',resize);
+  (function loop(){
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    drawBG(ctx,W,H,f,0.5);
+    drawCar(ctx,W/2-65,H-80,130,58,GS.upgrades,f);
+    f++; requestAnimationFrame(loop);
+  })();
+})();
+
+/* ══════════════════════════════════════════════════════════
+   MAIN GAME
+══════════════════════════════════════════════════════════ */
+const Game = {
+  async start(){
+    GS.wave=1; updateHUD();
+    showScreen('s-trivia');
+    await Trivia.load();
+  },
+  async nextLevel(){
+    GS.level++;
+    GS.stats.levelsCompleted++;
+    GS.wave++;
+    updateHUD();
+    showScreen('s-trivia');
+    await Trivia.load();
+  },
+};
+
+/* ══════════════════════════════════════════════════════════
+   TRIVIA PHASE
+══════════════════════════════════════════════════════════ */
+const Trivia = {
+  timer: null,
+  left:  15,
+
+  async load(){
+    updateHUD();
+    const diff=getDiff();
+    $('q-diff').textContent=diff.toUpperCase();
+    $('q-diff').className='qdiff '+diff;
+    GS.questions      = await fetchQuestions();
+    GS.questionIndex  = 0;
+    this.show();
+  },
+
+  show(){
+    const q=GS.questions[GS.questionIndex]; if(!q) return;
+    $('q-prog').textContent = `Q ${GS.questionIndex+1} / ${GS.questions.length}`;
+    $('q-cat').textContent  = q.cat;
+    $('q-txt').textContent  = q.q;
+    $('q-fb').textContent   = '';
+    $('q-fb').className     = 'qfb';
+
+    const grid=$('a-grid'); grid.innerHTML='';
+    q.a.forEach(ans=>{
+      const b=mk('button','abtn',ans);
+      b.onclick=()=>this.pick(ans,q.c,b);
+      grid.appendChild(b);
+    });
+    this.startTimer();
+  },
+
+  startTimer(){
+    if(this.timer) clearInterval(this.timer);
+    this.left=15;
+    const fill=$('t-fill'), lbl=$('t-lbl');
+    fill.style.transition='none'; fill.style.width='100%'; fill.className='timerfill'; lbl.textContent='15s';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ fill.style.transition='width 1s linear'; }));
+    this.timer=setInterval(()=>{
+      this.left--;
+      fill.style.width=((this.left/15)*100)+'%';
+      lbl.textContent=this.left+'s';
+      if(this.left<=5)      fill.className='timerfill danger';
+      else if(this.left<=8) fill.className='timerfill warn';
+      if(this.left<=0){ clearInterval(this.timer); this.timer=null; this.pick(null,GS.questions[GS.questionIndex].c,null); }
+    },1000);
+  },
+
+  pick(sel, correct, btn){
+    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+    Array.from($('a-grid').children).forEach(b=>{ b.disabled=true; if(b.textContent===correct) b.classList.add('correct'); });
+    const ok = sel!==null && sel===correct;
+    const fb=$('q-fb');
+    GS.stats.total++;
+
+    if(ok){
+      GS.stats.correct++;
+      if(btn) btn.classList.add('correct');
+      const base  = GS.level<=3?10:GS.level<=7?15:22;
+      const speed = Math.floor((this.left/15)*12);
+      const earn  = base+speed;
+      GS.coins+=earn;
+      fb.textContent=`Correct! +${earn} coins`; fb.className='qfb correct';
+      floatCoins(earn);
+    } else {
+      if(btn) btn.classList.add('wrong');
+      const dmg    = Math.max(1,(GS.level<=3?8:GS.level<=7?13:20) - GS.upgrades.armor*5);
+      GS.hp       -= dmg;
+      const prefix = sel ? 'Wrong!' : "Time's up!";
+      fb.textContent=`${prefix} Correct: ${correct}  −${dmg} HP`; fb.className='qfb wrong';
+      updateHUD();
+      if(GS.hp<=0){ setTimeout(gameOver,1600); return; }
+    }
+
+    updateHUD();
+    setTimeout(()=>{
+      GS.questionIndex++;
+      if(GS.questionIndex>=GS.questions.length) WavePhase.start();
+      else this.show();
+    },1800);
+  },
+};
+
+/* ══════════════════════════════════════════════════════════
+   WAVE PHASE
+══════════════════════════════════════════════════════════ */
+const WavePhase = {
+  raf: null,
+
+  start(){
+    showScreen('s-wave');
+    $('w-title').textContent='Wave '+GS.wave;
+    $('wstatus').textContent='Incoming…';
+    $('ws-kills').textContent='0';
+    $('ws-coins').textContent='+0';
+    $('ws-dmg').textContent='0';
+    GS.waveKills=0; GS.waveCoins=0; GS.waveDmg=0;
+    this.run();
+  },
+
+  run(){
+    const cv=$('wave-cv'), ctx=cv.getContext('2d');
+    cv.width=Math.min(800,window.innerWidth-32); cv.height=260;
+    const W=cv.width, H=cv.height;
+
+    const carW=130, carH=58;
+    const car={ x:-carW-10, y:H-84, w:carW, h:carH, entered:false };
+    const tgtX=W*0.22;
+    const spd=2.5+GS.upgrades.nitro*1.2;
+
+    // Zombies
+    const zCount=6+GS.level*2+GS.wave;
+    const stunN =GS.upgrades.emp*2;
+    const zs=[];
+    for(let i=0;i<zCount;i++){
+      zs.push({
+        x:  W*0.55+i*(46+Math.random()*30),
+        y:  H-96+Math.random()*26-13,
+        w:24, h:44,
+        hp: 2+Math.floor(GS.level/3),
+        mhp:2+Math.floor(GS.level/3),
+        spd:1.4+GS.level*0.12+Math.random()*.3,
+        alive:true,
+        stun: i<stunN?115:0,
+        col: `hsl(${95+Math.random()*45|0},42%,${34+(Math.random()*14|0)}%)`,
+        bob: Math.random()*Math.PI*2,
+      });
+    }
+
+    let bullets=[], turretCd=0, flames=[];
+    const dmgCd=new Array(zCount).fill(0);
+    let frame=0, done=false, endTick=0, dead=false;
+
+    const tick=()=>{
+      if(dead) return;
+      this.raf=requestAnimationFrame(tick);
+      ctx.clearRect(0,0,W,H);
+      drawBG(ctx,W,H,frame,car.entered?spd/2.5:1);
+      frame++;
+
+      // Drive in, then hold position while the world scrolls past
+      if(!car.entered){ car.x+=4; if(car.x>=tgtX){ car.x=tgtX; car.entered=true; $('wstatus').textContent='FIGHTING!'; } }
+      else zs.forEach(z=>{ if(z.alive) z.x-=spd; });
+
+      if(car.entered){
+        // EMP stun tick
+        zs.forEach(z=>{ if(z.stun>0) z.stun--; });
+
+        // Zombies move + collide
+        zs.forEach((z,zi)=>{
+          if(!z.alive||dead) return;
+          if(!z.stun){ z.x-=z.spd; z.bob+=0.18; }
+          const front=car.x+car.w, back=car.x;
+          if(z.x<front+8 && z.x+z.w>back){
+            z.hp-=1+GS.upgrades.ram*5;
+            if(z.hp<=0){ kill(z); }
+            else if(dmgCd[zi]<=0){
+              const hit=Math.max(1,3-GS.upgrades.armor);
+              GS.hp-=hit; GS.waveDmg+=hit; dmgCd[zi]=45;
+              updateHUD();
+              if(GS.hp<=0){ dead=true; cancelAnimationFrame(this.raf); gameOver(); }
+            }
+          }
+          if(dmgCd[zi]>0) dmgCd[zi]--;
+        });
+
+        // Flame thrower
+        if(GS.upgrades.flame>0 && frame%18===0){
+          const range=55+GS.upgrades.flame*45, fdmg=GS.upgrades.flame*2;
+          zs.forEach(z=>{
+            if(!z.alive) return;
+            const d=z.x-(car.x+car.w);
+            if(d>=0&&d<range){ z.hp-=fdmg; if(z.hp<=0) kill(z); }
+          });
+          for(let i=0;i<GS.upgrades.flame*3;i++){
+            flames.push({ x:car.x+car.w+Math.random()*14, y:car.y+carH*.5+(Math.random()-.5)*16, vx:2.5+Math.random()*2.5, vy:(Math.random()-.5)*1.8, life:22+(Math.random()*10|0), ml:32, r:7+Math.random()*7 });
+          }
+        }
+
+        // Turret
+        if(GS.upgrades.turret>0){
+          if(--turretCd<=0){
+            turretCd=28-GS.upgrades.turret*5;
+            for(let b=0;b<GS.upgrades.turret;b++) bullets.push({x:car.x+car.w,y:car.y+10+b*7,alive:true});
+          }
+        }
+      }
+
+      // Bullets
+      bullets=bullets.filter(b=>b.alive&&b.x<W+60);
+      bullets.forEach(b=>{
+        b.x+=9;
+        zs.forEach(z=>{ if(!z.alive||!b.alive) return; if(b.x>z.x&&b.x<z.x+z.w&&b.y>z.y&&b.y<z.y+z.h){ z.hp-=2; b.alive=false; if(z.hp<=0) kill(z); } });
+      });
+
+      // Flames
+      flames=flames.filter(f=>f.life>0);
+      flames.forEach(f=>{ f.x+=f.vx; f.y+=f.vy; f.life--; });
+      flames.forEach(f=>{
+        ctx.save(); ctx.globalAlpha=f.life/f.ml*.85;
+        const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r);
+        g.addColorStop(0,'#ffff44'); g.addColorStop(.45,'#f06000'); g.addColorStop(1,'transparent');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2); ctx.fill(); ctx.restore();
+      });
+
+      // Draw bullets
+      bullets.forEach(b=>{
+        ctx.fillStyle='#ffe000'; ctx.fillRect(b.x-10,b.y-2,13,4);
+        ctx.save(); ctx.globalAlpha=.35; ctx.fillStyle='#fff'; ctx.fillRect(b.x-16,b.y-1,9,2); ctx.restore();
+      });
+
+      // Draw zombies
+      zs.forEach(z=>{ if(z.alive) drawZombie(ctx,z,frame); });
+
+      // Draw car
+      drawCar(ctx,car.x,car.y,car.w,car.h,GS.upgrades,frame);
+
+      // Update stats every 5 frames
+      if(frame%5===0){ $('ws-kills').textContent=GS.waveKills; $('ws-coins').textContent='+'+GS.waveCoins; $('ws-dmg').textContent=GS.waveDmg; updateHUD(); }
+
+      // End check
+      if(!done){
+        const cleared = zs.every(z=>!z.alive);
+        if(cleared || zs.every(z=>!z.alive||z.x+z.w<0) || frame>900){
+          done=true; $('wstatus').textContent = cleared ? '✓ WAVE CLEARED!' : 'SURVIVED!';
+        }
+      }
+      if(done&&++endTick>80){ cancelAnimationFrame(this.raf); setTimeout(showShop,350); }
+    };
+
+    const kill=z=>{ z.alive=false; GS.waveKills++; GS.stats.kills++; const cg=2+(GS.level>>1); GS.waveCoins+=cg; GS.coins+=cg; };
+    tick();
+  },
+};
+
+/* ══════════════════════════════════════════════════════════
+   SHOP PHASE
+══════════════════════════════════════════════════════════ */
+function showShop(){
+  showScreen('s-shop');
+  updateHUD();
+  $('shop-coins').textContent='⚙ Coins: '+GS.coins;
+  $('shop-cont').textContent='Continue to Level '+(GS.level+1);
+  renderUpgrades();
+  renderCarPreview();
+}
+
+function renderUpgrades(){
+  const grid=$('ugrid'); grid.innerHTML='';
+  Object.entries(UPGRADES).forEach(([key,upg])=>{
+    const tier=GS.upgrades[key], maxed=tier>=3, cost=maxed?0:upg.costs[tier], afford=!maxed&&GS.coins>=cost;
+    const card=mk('div','ucard'+(maxed?' maxed':tier>0?' owned':''));
+    const pips=[0,1,2].map(i=>`<div class="tpip${i<tier?(maxed?' mx':' on'):''}"></div>`).join('');
+    let bcls, btxt;
+    if(maxed)       { bcls='ubtn full';  btxt='MAXED OUT'; }
+    else if(afford) { bcls='ubtn buy';   btxt=`Buy Tier ${tier+1} — ${cost} 🪙`; }
+    else            { bcls='ubtn broke'; btxt=`${cost} 🪙 needed`; }
+    card.innerHTML=`
+      <div class="utop"><span class="uicon">${upg.icon}</span><span class="uname">${upg.name}</span></div>
+      <div class="udesc">${upg.desc}</div>
+      <div class="utiers">${pips}</div>
+      <button class="${bcls}" data-k="${key}" ${!afford&&!maxed?'disabled':''}>${btxt}</button>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.ubtn.buy').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const k=b.dataset.k, t=GS.upgrades[k]; if(t>=3) return;
+      const cost=UPGRADES[k].costs[t]; if(GS.coins<cost) return;
+      GS.coins-=cost; GS.upgrades[k]++;
+      updateHUD(); $('shop-coins').textContent='⚙ Coins: '+GS.coins;
+      renderUpgrades(); renderCarPreview();
+    });
+  });
+}
+
+function renderCarPreview(){
+  const cv=$('car-cv'), ctx=cv.getContext('2d');
+  cv.width=Math.min(520,window.innerWidth-64); cv.height=160;
+  ctx.fillStyle='#0d0d11'; ctx.fillRect(0,0,cv.width,cv.height);
+  drawBG(ctx,cv.width,cv.height,0,0.3);
+  drawCar(ctx,cv.width/2-65,cv.height-76,130,58,GS.upgrades,0);
+  const active=Object.entries(GS.upgrades).filter(([,v])=>v>0).map(([k])=>UPGRADES[k].icon);
+  if(active.length){
+    ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(0,0,cv.width,26);
+    ctx.font='13px Share Tech Mono,monospace'; ctx.fillStyle='#2eff10';
+    ctx.fillText('EQUIPPED: '+active.join('  '),10,18);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   GAME OVER
+══════════════════════════════════════════════════════════ */
+function gameOver(){
+  if(Trivia.timer){ clearInterval(Trivia.timer); Trivia.timer=null; }
+  if(WavePhase.raf){ cancelAnimationFrame(WavePhase.raf); WavePhase.raf=null; }
+  const acc=GS.stats.total?Math.round(GS.stats.correct/GS.stats.total*100):0;
+  const upgs=Object.values(GS.upgrades).reduce((a,b)=>a+b,0);
+  $('go-lvl').textContent   = GS.stats.levelsCompleted;
+  $('go-kills').textContent = GS.stats.kills;
+  $('go-acc').textContent   = acc+'%';
+  $('go-upg').textContent   = upgs;
+  showScreen('s-over');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CANVAS: ROAD BACKGROUND
+══════════════════════════════════════════════════════════ */
+function drawBG(ctx,W,H,frame,spd){
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,H*.5);
+  sky.addColorStop(0,'#050510'); sky.addColorStop(1,'#101028');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*.5);
+
+  // Ruined buildings (silhouette, parallax)
+  ctx.fillStyle='#0b0b18';
+  for(let i=0;i<10;i++){
+    const bx=((i*112-frame*spd*.55)%(W+130)+W+130)%(W+130)-130;
+    const bh=34+(i*31%44), bw=50+(i*17%38);
+    ctx.fillRect(bx,H*.5-bh,bw,bh);
+    // crumbled top
+    ctx.fillStyle='#07070f';
+    for(let c=0;c<4;c++) ctx.fillRect(bx+c*(bw/4),H*.5-bh-(c%2)*7,bw/4-2,9+c%2*5);
+    // windows
+    ctx.fillStyle='rgba(255,170,0,.06)';
+    for(let row=0;row<2;row++) for(let col=0;col<3;col++) ctx.fillRect(bx+6+col*14,H*.5-bh+8+row*14,8,6);
+    ctx.fillStyle='#0b0b18';
+  }
+
+  // Ground
+  ctx.fillStyle='#14110a'; ctx.fillRect(0,H*.5,W,H*.5);
+  // Road
+  const rd=ctx.createLinearGradient(0,H-112,0,H);
+  rd.addColorStop(0,'#26262a'); rd.addColorStop(1,'#141417');
+  ctx.fillStyle=rd; ctx.fillRect(0,H-112,W,112);
+  // Cracks / debris
+  ctx.fillStyle='rgba(0,0,0,.35)';
+  for(let i=0;i<14;i++){
+    const dx=((i*97-frame*spd*3.5)%(W+60)+W+60)%(W+60)-60;
+    ctx.fillRect(dx,H-100+(i*29%92),12+(i*7%16),2);
+  }
+  // Road edges
+  ctx.strokeStyle='rgba(240,96,0,.2)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,H-112); ctx.lineTo(W,H-112); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,H-4);   ctx.lineTo(W,H-4);   ctx.stroke();
+  // Centre dash
+  ctx.strokeStyle='rgba(240,96,0,.45)'; ctx.lineWidth=2;
+  ctx.setLineDash([28,18]); ctx.lineDashOffset=-((frame*spd*3.5)%46);
+  ctx.beginPath(); ctx.moveTo(0,H-58); ctx.lineTo(W,H-58); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ══════════════════════════════════════════════════════════
+   CANVAS: ZOMBIE
+══════════════════════════════════════════════════════════ */
+function drawZombie(ctx,z,frame){
+  const bob=Math.sin(z.bob)*3, x=z.x, y=z.y+bob;
+  if(z.stun>0){ ctx.save(); ctx.globalAlpha=.55+Math.sin(frame*.3)*.45; }
+  // Legs
+  ctx.fillStyle=z.col;
+  ctx.fillRect(x+5,y+30,6,13); ctx.fillRect(x+14,y+30,6,13);
+  // Body
+  ctx.fillRect(x+4,y+13,17,18);
+  // Outstretched arms
+  ctx.fillRect(x-3,y+14,9,5); ctx.fillRect(x+19,y+14,9,5);
+  // Head
+  ctx.fillStyle='#3d6040'; ctx.fillRect(x+5,y+1,15,13);
+  // Eyes
+  ctx.fillStyle='#ff2200';
+  ctx.fillRect(x+7, y+4,3,4);
+  ctx.fillRect(x+14,y+4,3,4);
+  // HP bar
+  if(z.hp<z.mhp){
+    ctx.fillStyle='#300'; ctx.fillRect(x,y-8,26,4);
+    ctx.fillStyle='#2eff10'; ctx.fillRect(x,y-8,26*(z.hp/z.mhp),4);
+  }
+  if(z.stun>0){ ctx.restore(); ctx.font='11px sans-serif'; ctx.fillText('⚡',x+7,y-6); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   CANVAS: CAR
+══════════════════════════════════════════════════════════ */
+function drawCar(ctx,x,y,w,h,u,f){
+  // Nitro exhaust (rear)
+  if(u.nitro>0){
+    for(let i=0;i<u.nitro*3;i++){
+      const rnd=Math.random();
+      ctx.save(); ctx.globalAlpha=(1-rnd)*.75;
+      const gx=x-6-rnd*24, gy=y+h*.72+(Math.random()-.5)*10;
+      const g=ctx.createRadialGradient(gx,gy,0,gx,gy,8+rnd*14);
+      g.addColorStop(0,u.nitro>=2?'#00ccff':'#2eff10');
+      g.addColorStop(.5,'#f06000'); g.addColorStop(1,'transparent');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx,gy,8+rnd*14,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+  }
+  // EMP launcher (rear)
+  if(u.emp>0){
+    ctx.fillStyle='#334466'; ctx.fillRect(x-14,y+h*.44,14,15);
+    ctx.fillStyle='#0099ee'; ctx.beginPath(); ctx.arc(x-7,y+h*.515,4,0,Math.PI*2); ctx.fill();
+    if(u.emp>=2){ ctx.fillStyle='#334466'; ctx.fillRect(x-14,y+h*.62,14,13); ctx.fillStyle='#0099ee'; ctx.beginPath(); ctx.arc(x-7,y+h*.685,3.5,0,Math.PI*2); ctx.fill(); }
+  }
+  // Body
+  ctx.fillStyle='#2c2c3e'; ctx.fillRect(x,y+h*.38,w,h*.44);
+  // Cabin
+  ctx.fillStyle='#20202e';
+  const cx=x+w*.2, cw=w*.52;
+  ctx.beginPath(); ctx.moveTo(cx,y+h*.38); ctx.lineTo(cx+cw*.08,y+h*.06); ctx.lineTo(cx+cw*.92,y+h*.06); ctx.lineTo(cx+cw,y+h*.38); ctx.closePath(); ctx.fill();
+  // Window tint
+  ctx.fillStyle='rgba(46,255,16,.1)'; ctx.fillRect(cx+cw*.14,y+h*.1,cw*.72,h*.22);
+  // Armor plating
+  if(u.armor>0){
+    ctx.strokeStyle=u.armor>=3?'#888':u.armor===2?'#666':'#444'; ctx.lineWidth=u.armor>=2?3:2;
+    ctx.strokeRect(x+2,y+h*.38+2,w-4,h*.44-4);
+    if(u.armor>=2){ ctx.fillStyle='#777'; [.1,.5,.9].forEach(px=>ctx.fillRect(x+w*px-2,y+h*.39,4,4)); }
+  }
+  // Flame nozzle (side)
+  if(u.flame>0){
+    const nl=16+u.flame*5;
+    ctx.fillStyle='#554422'; ctx.fillRect(x+w*.65,y+h*.41,nl,9);
+    ctx.fillStyle='#887744'; ctx.beginPath(); ctx.arc(x+w*.65+nl,y+h*.455,5,0,Math.PI*2); ctx.fill();
+  }
+  // Spike ram (front)
+  if(u.ram>0){
+    const sc=u.ram*2+1, sl=7+u.ram*5;
+    ctx.fillStyle='#aaa'; ctx.fillRect(x+w,y+h*.38,5,h*.44);
+    for(let i=0;i<sc;i++){
+      const sy=y+h*.4+i*(h*.38/sc);
+      ctx.beginPath(); ctx.moveTo(x+w+5,sy); ctx.lineTo(x+w+5+sl,sy+4); ctx.lineTo(x+w+5,sy+8); ctx.closePath(); ctx.fill();
+    }
+  }
+  // Roof turret
+  if(u.turret>0){
+    const tx=x+w*.46, ty=y+h*.02;
+    ctx.fillStyle='#55556a'; ctx.fillRect(tx,ty,22,12);
+    const bl=14+u.turret*6;
+    ctx.fillStyle='#778'; ctx.fillRect(tx+14,ty+3,bl,5);
+    if(u.turret>=2) ctx.fillRect(tx+14,ty+9,bl-4,4);
+    ctx.strokeStyle='#888'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(tx+11,ty+7,5,0,Math.PI*2); ctx.stroke();
+  }
+  // Wheels
+  const wr=h*.19, wy=y+h*.82;
+  [.15,.83].forEach(wx=>{
+    const wX=x+w*wx;
+    ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(wX,wy,wr,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#383838'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(wX,wy,wr,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(wX,wy,wr*.52,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+    for(let s=0;s<5;s++){
+      const ang=(s/5)*Math.PI*2+f*.09;
+      ctx.beginPath(); ctx.moveTo(wX+Math.cos(ang)*wr*.55,wy+Math.sin(ang)*wr*.55); ctx.lineTo(wX+Math.cos(ang)*wr*.93,wy+Math.sin(ang)*wr*.93); ctx.stroke();
+    }
+  });
+  // Headlight glow
+  ctx.save(); ctx.globalAlpha=.55+Math.sin(f*.12)*.08;
+  const gl=ctx.createRadialGradient(x+w+4,y+h*.52,0,x+w+4,y+h*.52,36);
+  gl.addColorStop(0,'rgba(255,210,80,.9)'); gl.addColorStop(1,'transparent');
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x+w+4,y+h*.52,36,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
+</script>
+</body>
+</html>
