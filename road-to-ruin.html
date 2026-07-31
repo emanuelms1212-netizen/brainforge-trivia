@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08080b">
+<meta name="description" content="Answer trivia, survive zombie waves, upgrade your rig.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Road to Ruin">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%9A%97</text></svg>">
 <title>Road to Ruin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,13 +34,18 @@ body{
   background:var(--bg);color:var(--text);
   font-family:'Barlow Condensed',sans-serif;font-size:16px;line-height:1.4;
   min-height:100vh;overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
 }
+button{touch-action:manipulation;-webkit-appearance:none;font-family:inherit}
 
 /* ── HUD ───────────────────────────────────────────────── */
 #hud{
   position:fixed;top:0;left:0;right:0;height:var(--hh);
   background:rgba(8,8,11,.96);border-bottom:2px solid var(--orange);
-  display:flex;align-items:center;gap:18px;padding:0 18px;
+  display:flex;align-items:center;gap:18px;
+  padding:env(safe-area-inset-top) calc(18px + env(safe-area-inset-right)) 0 calc(18px + env(safe-area-inset-left));
+  height:calc(var(--hh) + env(safe-area-inset-top));
   z-index:200;backdrop-filter:blur(6px);
   transition:opacity .3s,transform .3s;
 }
@@ -48,13 +60,15 @@ body{
 #hptxt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);text-align:right;margin-top:2px}
 
 /* ── Screens ───────────────────────────────────────────── */
-.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:calc(var(--hh) + 24px) 16px 40px;animation:fadeIn .35s ease both}
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;
+  padding:calc(var(--hh) + 24px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
+  animation:fadeIn .35s ease both}
 .screen.active{display:flex}
 #s-title{padding-top:0;justify-content:center;gap:0}
 @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── Title ─────────────────────────────────────────────── */
-#title-cv{width:100%;max-width:640px;display:block;border-bottom:2px solid var(--orange)}
+#title-cv{width:100%;max-width:640px;height:auto;aspect-ratio:640/170;display:block;border-bottom:2px solid var(--orange)}
 .gtitle{
   font-family:'Russo One',sans-serif;
   font-size:clamp(44px,11vw,88px);color:var(--orange);text-transform:uppercase;
@@ -106,9 +120,9 @@ body{
 .qfb.correct{color:var(--green)}.qfb.wrong{color:var(--red)}
 
 /* ── Wave ───────────────────────────────────────────────── */
-#s-wave{gap:16px;width:100%;max-width:840px;margin:0 auto}
+#s-wave{gap:16px;width:100%;max-width:840px;margin:0 auto;justify-content:center}
 .wtitle{font-family:'Russo One',sans-serif;font-size:28px;color:var(--orange);letter-spacing:4px;text-transform:uppercase;text-align:center}
-#wave-cv{width:100%;border:2px solid var(--orange);border-radius:8px;display:block;image-rendering:pixelated}
+#wave-cv{width:100%;height:auto;aspect-ratio:800/260;border:2px solid var(--orange);border-radius:8px;display:block}
 .wstats{display:flex;gap:32px;justify-content:center;margin-top:4px}
 .wst{text-align:center}
 .wstv{font-family:'Russo One',sans-serif;font-size:30px}
@@ -120,7 +134,7 @@ body{
 #s-shop{gap:14px;width:100%;max-width:680px;margin:0 auto}
 .stitle{font-family:'Russo One',sans-serif;font-size:28px;color:var(--orange);letter-spacing:4px;text-transform:uppercase;text-align:center}
 .scoinlbl{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--yellow);text-align:center}
-#car-cv{width:100%;max-width:520px;border:1px solid var(--bdr);border-radius:8px;display:block}
+#car-cv{width:100%;max-width:520px;height:auto;aspect-ratio:520/160;border:1px solid var(--bdr);border-radius:8px;display:block}
 .ugrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
 .ucard{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s}
 .ucard.owned{border-color:#2a2a42}
@@ -157,7 +171,17 @@ body{
   .agrid{grid-template-columns:1fr}
   .ugrid{grid-template-columns:1fr}
   .sgrid{grid-template-columns:1fr 1fr}
-  .qtxt{font-size:18px}
+  .qtxt{font-size:19px;min-height:0}
+  .qcard{padding:16px}
+  .abtn{padding:15px 13px}
+  /* Tighten the HUD so all four segments fit a phone width */
+  #hud{gap:10px;padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right))}
+  .hval{font-size:18px}
+  .hlbl{font-size:8px;letter-spacing:1px}
+  #hptxt{font-size:9px}
+  .wstats{gap:20px}
+  .wstv{font-size:25px}
+  .screen{padding-left:12px;padding-right:12px}
 }
 </style>
 </head>
@@ -360,8 +384,7 @@ function floatCoins(n, positive=true){
 (function titleAnim(){
   const cv=$('title-cv'), ctx=cv.getContext('2d');
   let f=0;
-  function resize(){ cv.width=cv.offsetWidth||Math.min(640,window.innerWidth-32); cv.height=170; }
-  resize(); window.addEventListener('resize',resize);
+  cv.width=640; cv.height=170;
   (function loop(){
     const W=cv.width,H=cv.height;
     ctx.clearRect(0,0,W,H);
@@ -493,8 +516,10 @@ const WavePhase = {
   },
 
   run(){
+    // Fixed logical resolution — CSS scales it to the viewport so gameplay
+    // is identical on phone and desktop.
     const cv=$('wave-cv'), ctx=cv.getContext('2d');
-    cv.width=Math.min(800,window.innerWidth-32); cv.height=260;
+    cv.width=800; cv.height=260;
     const W=cv.width, H=cv.height;
 
     const carW=130, carH=58;
@@ -669,7 +694,7 @@ function renderUpgrades(){
 
 function renderCarPreview(){
   const cv=$('car-cv'), ctx=cv.getContext('2d');
-  cv.width=Math.min(520,window.innerWidth-64); cv.height=160;
+  cv.width=520; cv.height=160;
   ctx.fillStyle='#0d0d11'; ctx.fillRect(0,0,cv.width,cv.height);
   drawBG(ctx,cv.width,cv.height,0,0.3);
   drawCar(ctx,cv.width/2-65,cv.height-76,130,58,GS.upgrades,0);
