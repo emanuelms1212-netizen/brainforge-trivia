@@ -2547,6 +2547,357 @@ function allBankQuestions(){
   return out;
 }
 
+/* ===== 04e-questions-extra.js ===== */
+/* ═══════════════════════════════════════════════════════════
+   QUESTION BANK — extension pack
+   Merged into BANK at load. The offline bank is the entire
+   question pool on hosts that block outbound fetch, so depth
+   here is what keeps a long session from repeating itself.
+═══════════════════════════════════════════════════════════ */
+const BANK_EXTRA = {
+'Geography':{
+easy:[
+['Which country is shaped like a boot?','Italy','Greece','Portugal','Croatia'],
+['What is the capital of Canada?','Ottawa','Toronto','Montreal','Vancouver'],
+['Which desert is the largest hot desert?','Sahara','Gobi','Kalahari','Arabian'],
+['On which continent is Egypt?','Africa','Asia','Europe','South America'],
+['What is the capital of Spain?','Madrid','Barcelona','Seville','Valencia'],
+['Which ocean lies east of the USA?','Atlantic','Pacific','Indian','Southern'],
+['Mount Everest lies on the border of Nepal and which country?','China','India','Bhutan','Pakistan']],
+medium:[
+['Which river flows through Paris?','Seine','Loire','Rhône','Garonne'],
+['What is the largest country in South America?','Brazil','Argentina','Peru','Colombia'],
+['Which country has the city of Marrakesh?','Morocco','Algeria','Tunisia','Libya'],
+['What is the capital of New Zealand?','Wellington','Auckland','Christchurch','Dunedin'],
+['Which sea lies between Italy and the Balkans?','Adriatic','Aegean','Tyrrhenian','Ionian'],
+['Which US state is the largest by area?','Alaska','Texas','California','Montana'],
+['What is the official language of Brazil?','Portuguese','Spanish','French','Dutch']],
+hard:[
+['Which country contains the source of the Blue Nile?','Ethiopia','Sudan','Uganda','Kenya'],
+['What separates Alaska from Russia?','Bering Strait','Denmark Strait','Davis Strait','Cook Inlet'],
+['Which is the world’s largest island?','Greenland','New Guinea','Borneo','Madagascar'],
+['What is the capital of Kazakhstan?','Astana','Almaty','Bishkek','Tashkent'],
+['Which country has the most volcanoes?','Indonesia','Japan','USA','Chile'],
+['Lake Titicaca sits between Peru and which country?','Bolivia','Chile','Ecuador','Brazil']],
+expert:[
+['Which country has no rivers at all?','Saudi Arabia','Oman','Yemen','Jordan'],
+['What is the lowest exposed land point on Earth?','Dead Sea shore','Death Valley','Qattara Depression','Turfan Depression'],
+['Which strait connects the Mediterranean to the Black Sea via Marmara?','Dardanelles','Bosphorus only','Kerch','Messina'],
+['The Wallace Line separates the fauna of which regions?','Asia and Australasia','Africa and Arabia','Europe and Asia','North and South America'],
+['Which nation is the only one to border both the Caspian and the Persian Gulf?','Iran','Iraq','Turkmenistan','Azerbaijan']]},
+
+'Science':{
+easy:[
+['What planet do we live on?','Earth','Mars','Venus','Saturn'],
+['What is H on the periodic table?','Hydrogen','Helium','Mercury','Hafnium'],
+['What organ pumps blood?','Heart','Liver','Lung','Kidney'],
+['What do bees produce?','Honey','Milk','Silk','Wax only'],
+['At what temperature does water boil at sea level in Celsius?','100','90','120','80'],
+['What is the centre of an atom called?','Nucleus','Electron','Orbital','Shell'],
+['Which vitamin does sunlight help produce?','Vitamin D','Vitamin C','Vitamin A','Vitamin K']],
+medium:[
+['What is the largest organ of the human body?','Skin','Liver','Lung','Intestine'],
+['What gas do we exhale most of besides nitrogen?','Carbon dioxide','Helium','Methane','Ozone'],
+['What is the chemical symbol for gold?','Au','Ag','Gd','Go'],
+['Which scientist proposed the theory of evolution by natural selection?','Charles Darwin','Gregor Mendel','Louis Pasteur','Carl Linnaeus'],
+['What type of rock forms from cooled magma?','Igneous','Sedimentary','Metamorphic','Organic'],
+['How many chromosomes does a human normally have?','46','44','48','23'],
+['What is the SI unit of force?','Newton','Joule','Watt','Pascal']],
+hard:[
+['What does an enzyme do to activation energy?','Lowers it','Raises it','Removes the reaction','Doubles it'],
+['Which subatomic particle determines the element?','Proton','Neutron','Electron','Photon'],
+['What is the second law of thermodynamics about?','Entropy increases','Energy is conserved','Force equals mass times acceleration','Absolute zero is unreachable'],
+['Which organelle handles protein folding and transport?','Endoplasmic reticulum','Lysosome','Vacuole','Centriole'],
+['What is the half-life of carbon-14 approximately?','5,730 years','1,600 years','12,000 years','700 years'],
+['What is Brownian motion evidence for?','The existence of atoms','Wave-particle duality','Conservation of momentum','Thermal expansion']],
+expert:[
+['What does the Pauli exclusion principle state?','No two fermions share all quantum numbers','Energy is quantised','Momentum and position cannot both be known','Charge is always conserved'],
+['Which particle mediates the strong nuclear force?','Gluon','Photon','W boson','Graviton'],
+['What is a Bose–Einstein condensate?','Matter near absolute zero in one quantum state','A plasma at extreme heat','A degenerate neutron core','A superheated gas'],
+['CRISPR-Cas9 originated as what in bacteria?','An adaptive immune system','A metabolic pathway','A replication enzyme','A cell-wall structure'],
+['What does the Nernst equation calculate?','Electrochemical cell potential','Reaction enthalpy','Gas diffusion rate','Osmotic pressure']]},
+
+'Movies':{
+easy:[
+['Who directed "E.T. the Extra-Terrestrial"?','Steven Spielberg','George Lucas','Robert Zemeckis','Tim Burton'],
+['What animated film features a lion cub named Simba?','The Lion King','Madagascar','Tarzan','The Jungle Book'],
+['Which film series features Luke Skywalker?','Star Wars','Star Trek','Dune','Battlestar Galactica'],
+['Who plays Iron Man in the Marvel films?','Robert Downey Jr.','Chris Evans','Mark Ruffalo','Chris Hemsworth'],
+['In "Toy Story", what kind of toy is Woody?','A cowboy doll','A spaceman','A dinosaur','A piggy bank'],
+['What is the name of the hobbit in "The Lord of the Rings"?','Frodo','Aragorn','Legolas','Boromir']],
+medium:[
+['Who directed "Pulp Fiction"?','Quentin Tarantino','Martin Scorsese','Guy Ritchie','David Fincher'],
+['Which film won Best Picture in 1994 over "Pulp Fiction"?','Forrest Gump','Braveheart','Schindler’s List','The Shawshank Redemption'],
+['Who directed "Spirited Away"?','Hayao Miyazaki','Isao Takahata','Makoto Shinkai','Satoshi Kon'],
+['What is the sled called in "Citizen Kane"?','Rosebud','Bluebell','Snowdrop','Daisy'],
+['Which actor played the Joker in "The Dark Knight"?','Heath Ledger','Jack Nicholson','Joaquin Phoenix','Jared Leto'],
+['Who directed "Get Out"?','Jordan Peele','Ryan Coogler','Barry Jenkins','Spike Lee']],
+hard:[
+['Which film was the first to be entirely computer-animated?','Toy Story','Antz','A Bug’s Life','Shrek'],
+['Who directed "Seven Samurai"?','Akira Kurosawa','Yasujiro Ozu','Kenji Mizoguchi','Nagisa Oshima'],
+['What is the highest-grossing non-English-language film worldwide?','Ne Zha 2','Parasite','Your Name','The Wandering Earth'],
+['Which cinematographer shot "Blade Runner 2049"?','Roger Deakins','Emmanuel Lubezki','Robert Richardson','Janusz Kamiński'],
+['"Rashomon" is famous for popularising what device?','Contradictory multiple perspectives','The jump cut','Deep focus','The freeze frame']],
+expert:[
+['Which director made "Sátántangó", running over seven hours?','Béla Tarr','Andrei Tarkovsky','Theo Angelopoulos','Alexander Sokurov'],
+['What is the Kuleshov effect?','Meaning created by shot juxtaposition','Distortion from a wide lens','Colour shift in film stock','Sound lagging picture'],
+['Which film first used Steadicam extensively?','Bound for Glory','Rocky','Marathon Man','The Shining'],
+['Who wrote the screenplay for "Network"?','Paddy Chayefsky','Robert Towne','William Goldman','Sidney Lumet']]},
+
+'History':{
+easy:[
+['Who was assassinated in Dallas in 1963?','John F. Kennedy','Abraham Lincoln','Martin Luther King Jr.','Robert Kennedy'],
+['Which ancient wonder still stands?','Great Pyramid of Giza','Colossus of Rhodes','Hanging Gardens','Lighthouse of Alexandria'],
+['Who led India’s non-violent independence movement?','Mahatma Gandhi','Jawaharlal Nehru','Subhas Chandra Bose','B.R. Ambedkar'],
+['In which country did the Renaissance begin?','Italy','France','England','Germany'],
+['Who was the Egyptian queen famously linked to Caesar and Antony?','Cleopatra','Nefertiti','Hatshepsut','Isis'],
+['The Great Fire of London happened in which century?','17th','15th','18th','16th']],
+medium:[
+['Who wrote the "Communist Manifesto" with Engels?','Karl Marx','Vladimir Lenin','Leon Trotsky','Rosa Luxemburg'],
+['Which war was fought between 1861 and 1865 in the USA?','American Civil War','War of 1812','Spanish-American War','Revolutionary War'],
+['Who was the first emperor of unified China?','Qin Shi Huang','Han Wudi','Kublai Khan','Sun Yat-sen'],
+['The Battle of Hastings took place in which year?','1066','1042','1087','1100'],
+['Which country was Nelson Mandela president of?','South Africa','Zimbabwe','Namibia','Kenya'],
+['The Suez Canal opened in which year?','1869','1885','1901','1856']],
+hard:[
+['Which treaty divided the New World between Spain and Portugal?','Treaty of Tordesillas','Treaty of Zaragoza','Treaty of Madrid','Treaty of Alcáçovas'],
+['Who was the longest-reigning British monarch?','Elizabeth II','Victoria','George III','Henry III'],
+['The Hanseatic League was primarily what?','A trading confederation','A military alliance','A religious order','A royal dynasty'],
+['Which empire did Suleiman the Magnificent rule?','Ottoman','Safavid','Mughal','Byzantine'],
+['What ended with the Edict of Nantes in 1598?','French Wars of Religion','Thirty Years’ War','Hundred Years’ War','Fronde']],
+expert:[
+['Who was the first Roman emperor to convert to Christianity?','Constantine I','Theodosius I','Diocletian','Julian'],
+['The Sykes–Picot Agreement divided which region?','The Ottoman Middle East','Sub-Saharan Africa','The Balkans','Central Asia'],
+['Which dynasty preceded the Ming in China?','Yuan','Song','Tang','Qing'],
+['What was the Investiture Controversy about?','Who appoints bishops','Succession to the French throne','The date of Easter','Control of Jerusalem']]},
+
+'Sports':{
+easy:[
+['How many players are on a basketball team on court?','5','6','7','4'],
+['What sport is played at Wimbledon?','Tennis','Cricket','Golf','Rugby'],
+['How many rings are on the Olympic flag?','5','4','6','7'],
+['In football, what colour card means sent off?','Red','Yellow','Blue','Black'],
+['What sport does Lionel Messi play?','Football','Basketball','Tennis','Baseball'],
+['How many players are on a volleyball team on court?','6','5','7','8']],
+medium:[
+['How many innings in a standard baseball game?','9','7','10','6'],
+['Which country originated the sport of sumo?','Japan','China','Korea','Mongolia'],
+['In golf, what is one under par called?','Birdie','Eagle','Bogey','Albatross'],
+['Which team has won the most NBA championships?','Boston Celtics','LA Lakers','Chicago Bulls','Golden State Warriors'],
+['How wide is a football goal in yards?','8','6','10','12'],
+['What is the highest belt colour in judo traditionally?','Black','Red','Brown','Blue']],
+hard:[
+['Who has scored the most international football goals?','Cristiano Ronaldo','Lionel Messi','Pelé','Ali Daei'],
+['In rugby league, how many players per side?','13','15','11','9'],
+['What is the diameter of a basketball hoop in inches?','18','16','20','22'],
+['Which country won the first Rugby World Cup in 1987?','New Zealand','Australia','South Africa','England'],
+['How many laps is the Indianapolis 500?','200','300','250','150']],
+expert:[
+['What is the "Court of Arbitration for Sport" based in?','Lausanne','Geneva','Zurich','Brussels'],
+['In archery, what is the inner gold ring worth?','10','9','12','8'],
+['Which boxer was stripped of his title for refusing the Vietnam draft?','Muhammad Ali','Joe Frazier','Sonny Liston','George Foreman'],
+['What is the maximum number of clubs allowed in a golf bag?','14','12','16','10']]},
+
+'Music':{
+easy:[
+['Which instrument has black and white keys?','Piano','Guitar','Violin','Flute'],
+['Who sang "Like a Rolling Stone"?','Bob Dylan','Bruce Springsteen','Neil Young','Johnny Cash'],
+['What does a conductor lead?','An orchestra','A choir only','A recording studio','A radio station'],
+['How many lines are in a musical staff?','5','4','6','3'],
+['Which band sang "Bohemian Rhapsody"?','Queen','The Beatles','Led Zeppelin','Pink Floyd'],
+['What family is the trumpet in?','Brass','Woodwind','Percussion','String']],
+medium:[
+['Who composed "Für Elise"?','Beethoven','Mozart','Chopin','Schubert'],
+['What does "a cappella" mean?','Without instruments','Very fast','With full orchestra','Sung in rounds'],
+['Which decade did hip-hop emerge in?','1970s','1960s','1980s','1990s'],
+['How many strings does a standard violin have?','4','5','6','3'],
+['Who wrote "The Magic Flute"?','Mozart','Haydn','Verdi','Wagner'],
+['What is the lowest female singing voice?','Contralto','Soprano','Mezzo-soprano','Alto only']],
+hard:[
+['What is a "cadenza"?','A solo virtuosic passage','A slow movement','A repeated bass line','A key change'],
+['Which composer went deaf later in life?','Beethoven','Bach','Handel','Liszt'],
+['What is the interval of an octave in semitones?','12','8','10','7'],
+['Who pioneered the twelve-bar blues form’s popularisation?','W.C. Handy','Robert Johnson','Muddy Waters','B.B. King'],
+['What does "ostinato" mean?','A persistently repeated pattern','A sudden silence','A gradual slowing','A high register']],
+expert:[
+['What is "musique concrète"?','Composition from recorded sound','Music written without a key','Improvised percussion','Notation using graphics'],
+['Which Beethoven symphony is the "Eroica"?','3rd','5th','6th','9th'],
+['What does "microtonal" music use?','Intervals smaller than a semitone','Very quiet dynamics','Extremely short notes','Only electronic sources'],
+['Who composed "4′33″"?','John Cage','Philip Glass','Steve Reich','Karlheinz Stockhausen']]},
+
+'Animals':{
+easy:[
+['What sound does a duck make?','Quack','Moo','Bark','Neigh'],
+['How many legs does an insect have?','6','8','4','10'],
+['What is a young dog called?','Puppy','Kitten','Foal','Cub'],
+['Which animal is known as the King of the Jungle?','Lion','Tiger','Elephant','Gorilla'],
+['What do pandas mainly eat?','Bamboo','Fish','Grass','Insects'],
+['Which sea creature has eight arms?','Octopus','Squid','Jellyfish','Starfish']],
+medium:[
+['What is the largest species of shark?','Whale shark','Great white','Tiger shark','Hammerhead'],
+['Which bird is the fastest in a dive?','Peregrine falcon','Golden eagle','Swift','Frigatebird'],
+['How long is an elephant’s pregnancy roughly?','22 months','12 months','9 months','30 months'],
+['What is a group of geese in flight called?','A skein','A gaggle','A flock','A murder'],
+['Which animal never sleeps in the conventional sense?','Bullfrog','Giraffe','Dolphin','Horse'],
+['What is the world’s most venomous fish?','Stonefish','Lionfish','Pufferfish','Stingray']],
+hard:[
+['Which mammal has the longest lifespan?','Bowhead whale','Elephant','Human','Blue whale'],
+['What is unique about the axolotl?','It regenerates limbs and stays larval','It changes sex yearly','It has no heart','It lives only in salt water'],
+['Which bird builds the largest nest?','Bald eagle','Ostrich','Stork','Weaver bird'],
+['What is a narwhal’s tusk actually?','An elongated tooth','A horn of bone','Fused cartilage','A modified fin'],
+['Which insect has the strongest bite relative to size?','Trap-jaw ant','Stag beetle','Praying mantis','Dragonfly']],
+expert:[
+['What is "eusociality"?','A social structure with reproductive division of labour','Living entirely alone','Seasonal migration in pairs','Symbiosis between species'],
+['Which animal has the largest genome known?','Lungfish','Blue whale','Amoeba dubia is not an animal','Salamander'],
+['What is a "syrinx" in birds?','Their vocal organ','A hollow wing bone','A digestive chamber','A gland for preening'],
+['Sperm whales dive deep using what adaptation in their heads?','Spermaceti organ','Enlarged sinuses','A swim bladder','Gill remnants']]},
+
+'Space':{
+easy:[
+['What do we call a rock that burns in Earth’s atmosphere?','Meteor','Comet','Asteroid','Planet'],
+['Which planet has famous rings?','Saturn','Mars','Venus','Mercury'],
+['What is the name of Earth’s natural satellite?','The Moon','Titan','Phobos','Europa'],
+['Who was the first person in space?','Yuri Gagarin','Neil Armstrong','Alan Shepard','John Glenn'],
+['What shape is the orbit of most planets?','Ellipse','Perfect circle','Spiral','Square'],
+['What is the Sun mostly made of?','Hydrogen','Oxygen','Carbon','Iron']],
+medium:[
+['What causes a solar eclipse?','The Moon passing between Earth and Sun','Earth passing between Moon and Sun','The Sun dimming','Cloud cover'],
+['Which planet spins on its side?','Uranus','Neptune','Venus','Mars'],
+['What is a light-year approximately in kilometres?','9.5 trillion','1 billion','150 million','300,000'],
+['Which space telescope launched in 1990?','Hubble','James Webb','Kepler','Spitzer'],
+['What is the asteroid belt between?','Mars and Jupiter','Earth and Mars','Jupiter and Saturn','Venus and Earth'],
+['Which planet rotates backwards relative to most?','Venus','Mercury','Mars','Jupiter']],
+hard:[
+['What is the event horizon of a black hole?','The boundary beyond which nothing escapes','The accretion disc edge','The singularity itself','The photon sphere'],
+['What is a pulsar?','A rapidly rotating neutron star','A young hot star','A collapsing gas cloud','A binary black hole'],
+['What is redshift evidence of?','Objects moving away','Objects heating up','Gravitational lensing','Stellar composition'],
+['Which mission first landed humans on the Moon?','Apollo 11','Apollo 8','Apollo 13','Gemini 12'],
+['What is the Oort Cloud?','A distant shell of icy bodies','A nebula near Orion','A dust ring around Jupiter','A star-forming region']],
+expert:[
+['What is the Fermi paradox about?','Absence of evidence for alien civilisations','Neutrino oscillation','Antimatter scarcity','Dark matter distribution'],
+['What is "inflation" in cosmology?','Rapid early expansion of the universe','Gradual heat death','Star formation rate','Galaxy rotation anomaly'],
+['What is the Schwarzschild radius proportional to?','Mass','Charge squared','Angular momentum','Temperature'],
+['Which element was formed almost entirely in the Big Bang?','Helium','Carbon','Iron','Oxygen']]},
+
+'Technology':{
+easy:[
+['What does "PC" stand for?','Personal Computer','Personal Console','Program Controller','Processing Core'],
+['What device do you use to point and click?','Mouse','Monitor','Modem','Motherboard'],
+['What does "Wi-Fi" connect you to?','A wireless network','A printer only','A power supply','A hard drive'],
+['What company created Windows?','Microsoft','Apple','IBM','Dell'],
+['What does "USB" stand for?','Universal Serial Bus','United System Bus','Universal Storage Box','User System Bridge'],
+['What key deletes text to the left?','Backspace','Enter','Shift','Tab']],
+medium:[
+['What does "open source" mean?','The source code is publicly available','It is always free of charge','It has no licence','It runs only on Linux'],
+['What is the most widely used version control system?','Git','Subversion','Mercurial','Perforce'],
+['What does "IP" stand for in IP address?','Internet Protocol','Internal Path','Information Packet','Interface Port'],
+['Which company developed Android?','Google','Apple','Samsung','Nokia'],
+['What is phishing?','Tricking users into revealing credentials','Overloading a server','Encrypting files for ransom','Scanning open ports'],
+['What does "GPU" primarily accelerate?','Graphics and parallel computation','Disk access','Network routing','Audio decoding']],
+hard:[
+['What is Big-O notation used for?','Describing algorithmic growth rate','Measuring memory in bytes','Rating CPU clock speed','Counting network hops'],
+['What does "idempotent" mean for an API request?','Repeating it gives the same result','It always fails safely','It runs asynchronously','It requires authentication'],
+['What is a hash collision?','Two inputs producing the same hash','A failed network packet','A duplicate database row','An overflowing buffer'],
+['What layer does TCP operate at in the OSI model?','Transport','Network','Session','Application'],
+['What does "garbage collection" manage?','Automatic memory reclamation','Disk defragmentation','Log rotation','Cache eviction only']],
+expert:[
+['What is the Byzantine Generals Problem about?','Consensus with unreliable participants','Sorting distributed data','Load balancing','Encryption key exchange'],
+['What does homomorphic encryption allow?','Computation on encrypted data','Faster key generation','Quantum-safe hashing','Zero-storage encryption'],
+['What is tail-call optimisation?','Reusing a stack frame for a final call','Compressing function names','Inlining all recursion','Deferring evaluation'],
+['What problem does Paxos solve?','Distributed consensus','Deadlock detection','Cache coherence','Packet fragmentation']]},
+
+'Cars':{
+easy:[
+['What do you check with a dipstick?','Engine oil','Tyre pressure','Battery charge','Brake pads'],
+['What does a speedometer measure?','Speed','Distance','Fuel','Engine temperature'],
+['Which pedal makes a car stop?','Brake','Accelerator','Clutch','Handbrake pedal'],
+['What is a car’s "boot" in British English?','The trunk','The bonnet','The windscreen','The wheel arch'],
+['Which brand makes the Civic?','Honda','Toyota','Nissan','Mazda'],
+['What fuel do most diesel engines use?','Diesel','Petrol','Kerosene','Ethanol']],
+medium:[
+['What does ABS prevent?','Wheel lock-up under braking','Engine overheating','Battery drain','Gearbox slipping'],
+['Which country is Škoda from?','Czech Republic','Poland','Slovakia','Hungary'],
+['What does a catalytic converter reduce?','Harmful exhaust emissions','Engine noise','Fuel consumption directly','Tyre wear'],
+['What is horsepower a measure of?','Power','Torque','Speed','Weight'],
+['Which company owns Lamborghini?','Volkswagen Group','Fiat','BMW','Ford'],
+['What does an alternator do?','Charges the battery while running','Starts the engine','Cools the radiator','Filters the oil']]
+,hard:[
+['What is the firing order of a typical inline-four?','1-3-4-2','1-2-3-4','1-4-2-3','1-3-2-4'],
+['What does a limited-slip differential do?','Limits speed difference between driven wheels','Locks the gearbox','Reduces steering angle','Balances brake pressure'],
+['What is "understeer"?','The car turns less than steered','The rear slides out','The car lifts a wheel','Brakes lock early'],
+['Which was the first mass-produced hybrid car?','Toyota Prius','Honda Insight','Chevrolet Volt','Nissan Leaf'],
+['What does a turbo "wastegate" control?','Boost pressure','Oil flow','Fuel injection timing','Exhaust temperature only']],
+expert:[
+['What is "camshaft duration"?','How long a valve stays open in crank degrees','Total camshaft length','Valve lift height','Timing belt lifespan'],
+['What does a "dry sump" system improve?','Oil supply under high cornering loads','Coolant circulation','Fuel atomisation','Brake cooling'],
+['Which racing series pioneered ground-effect aerodynamics?','Formula 1','NASCAR','IndyCar','WRC'],
+['What is "Ackermann steering geometry" for?','Inner and outer wheels tracing different radii','Reducing brake dive','Aligning the driveshaft','Limiting body roll']]},
+
+'Food':{
+easy:[
+['What is the main ingredient of bread?','Flour','Rice','Sugar','Butter'],
+['Which fruit is yellow and curved?','Banana','Apple','Grape','Plum'],
+['What drink is made from crushed grapes?','Wine','Beer','Cider','Whisky'],
+['What is a chef’s hat called?','Toque','Beret','Fez','Bonnet'],
+['Which vegetable makes you cry when cut?','Onion','Carrot','Potato','Cabbage'],
+['What is the main ingredient in hummus?','Chickpeas','Lentils','Beans','Peas']],
+medium:[
+['Which country invented the croissant’s ancestor, the kipferl?','Austria','France','Italy','Belgium'],
+['What is sake made from?','Rice','Barley','Grapes','Potatoes'],
+['What does "julienne" mean?','Cut into thin strips','Cook in wine','Bake slowly','Puree finely'],
+['Which spice comes from a crocus flower?','Saffron','Turmeric','Paprika','Cumin'],
+['What is the main grain in traditional couscous?','Semolina wheat','Rice','Barley','Corn'],
+['Which country consumes the most cheese per capita?','France','Italy','Netherlands','Switzerland']],
+hard:[
+['What is "confit" traditionally?','Cooked and preserved in its own fat','Fermented in brine','Smoked over fruitwood','Aged in vinegar'],
+['Which bacterium is used to make yoghurt?','Lactobacillus bulgaricus','Escherichia coli','Bacillus subtilis','Clostridium'],
+['What is "clarified butter" with the milk solids browned called?','Ghee','Beurre blanc','Roux','Schmaltz'],
+['What gives blue cheese its veins?','Penicillium mould','Bacterial cultures only','Copper wires','Charcoal ash'],
+['What does "brunoise" describe?','A very fine dice','A slow braise','A cream sauce','A pastry fold']],
+expert:[
+['What is the enzyme in pineapple that tenderises meat?','Bromelain','Papain','Rennin','Pepsin'],
+['What temperature range is the "danger zone" for food safety?','5–60°C','0–20°C','60–100°C','−5–5°C'],
+['What is "retrogradation" in cooked starch?','Recrystallisation causing staling','Browning under heat','Gluten development','Fat separation'],
+['Which compound gives chilli its heat?','Capsaicin','Piperine','Allicin','Curcumin']]},
+
+'General Knowledge':{
+easy:[
+['How many hours in a day?','24','12','36','48'],
+['What is the opposite of hot?','Cold','Warm','Mild','Dry'],
+['How many colours in a rainbow traditionally?','7','6','5','8'],
+['What is 10 multiplied by 10?','100','20','1000','110'],
+['How many wheels does a bicycle have?','2','3','4','1'],
+['What do you call frozen water?','Ice','Steam','Snow only','Fog']],
+medium:[
+['How many degrees in a circle?','360','180','270','400'],
+['What is the Roman numeral for 50?','L','C','D','X'],
+['How many players in a chess game?','2','4','1','3'],
+['What is the currency of Japan?','Yen','Won','Yuan','Ringgit'],
+['How many sides does a dodecagon have?','12','10','11','14'],
+['What is the largest planet-like body in the asteroid belt?','Ceres','Vesta','Pallas','Juno']],
+hard:[
+['What is the only mammal that cannot jump?','Elephant','Rhinoceros','Hippopotamus','Sloth'],
+['How many keys are on a standard QWERTY keyboard typically?','104','88','96','120'],
+['What is the study of word origins called?','Etymology','Entomology','Ethnology','Epistemology'],
+['What is the plural of "octopus" most accepted in English?','Octopuses','Octopi','Octopodes only','Octopus'],
+['Which number is considered the first prime?','2','1','3','0']],
+expert:[
+['What is the "Monty Hall problem" about?','Conditional probability and switching doors','Game theory in auctions','Statistical sampling bias','Random walk theory'],
+['What does "sesquipedalian" mean?','Given to long words','Occurring every 18 months','Six-sided','Relating to feet'],
+['What is Benford’s Law about?','Distribution of leading digits','Growth of transistor counts','Diminishing returns','Network value scaling'],
+['What is the "Overton window"?','The range of politically acceptable ideas','A period for legal appeal','A trading time frame','A psychological bias']]}
+};
+
+/* merge the extension pack into the primary bank */
+(function mergeBank(){
+  for (const cat in BANK_EXTRA){
+    if (!BANK[cat]) { BANK[cat] = BANK_EXTRA[cat]; continue; }
+    for (const d in BANK_EXTRA[cat]){
+      BANK[cat][d] = (BANK[cat][d] || []).concat(BANK_EXTRA[cat][d]);
+    }
+  }
+})();
+
 /* ===== 05-audio.js ===== */
 /* ═══════════════════════════════════════════════════════════
    AUDIO — fully synthesised. No asset files, works offline.
