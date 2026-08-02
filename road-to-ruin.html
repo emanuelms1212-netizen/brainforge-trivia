@@ -4219,6 +4219,61 @@ const HUD = {
   }
 };
 
+/* ── shared player controls ──────────────────────────────
+   Used by both the wave phase and No-Trivia. Touch drag takes
+   priority over keys/gamepad so a phone and a desktop behave
+   identically without a mode switch.                         */
+const Controls = {
+  _h:null,
+  bind(cv, getS){
+    Controls.unbind();
+    const toY = e => { const r = cv.getBoundingClientRect();
+      return (e.clientY - r.top) * (CV_H / r.height); };
+    const down = e => { const S = getS(); if (!S) return;
+      e.preventDefault(); S.touching = true; S.touchY = toY(e);
+      if (cv.setPointerCapture && e.pointerId != null){ try{ cv.setPointerCapture(e.pointerId); }catch(_){} } };
+    const move = e => { const S = getS(); if (!S || !S.touching) return;
+      e.preventDefault(); S.touchY = toY(e); };
+    const up = () => { const S = getS(); if (S) S.touching = false; };
+    Controls._h = { cv, down, move, up };
+    cv.addEventListener('pointerdown', down, { passive:false });
+    cv.addEventListener('pointermove', move, { passive:false });
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
+  },
+  unbind(){
+    const h = Controls._h; if (!h) return;
+    h.cv.removeEventListener('pointerdown', h.down);
+    h.cv.removeEventListener('pointermove', h.move);
+    removeEventListener('pointerup', h.up);
+    removeEventListener('pointercancel', h.up);
+    Controls._h = null;
+  },
+  // vertical steering, clamped to the road surface
+  steer(S, lo, hi){
+    if (S.touching && S.touchY != null){
+      const t = clamp(S.touchY - S.car.h/2, lo, hi);
+      S.car.y = lerp(S.car.y, t, 0.28); S.car.vy = 0;
+    } else {
+      const ax = Input.axis();
+      if (!isFinite(S.car.vy)) S.car.vy = 0;
+      S.car.vy = lerp(S.car.vy, ax.y * 4 * G.settings.sensitivity, 0.25);
+      S.car.y = clamp(S.car.y + S.car.vy, lo, hi);
+    }
+    // belt and braces: never let a bad frame poison the renderer
+    if (!isFinite(S.car.y)) S.car.y = (lo + hi) / 2;
+  },
+  firing(S){ return Input.firing() || !!S.touching; },
+  hint(){
+    return matchMedia('(pointer:coarse)').matches
+      ? 'drag the road to steer · hold to fire'
+      : `${Keybind.label(G.settings.keys.up)}/${Keybind.label(G.settings.keys.down)} steer · ` +
+        `${Keybind.label(G.settings.keys.fire)} fire`;
+  }
+};
+// road bounds for the car — keeps it on the tarmac
+const ROAD_LO = CV_H - 116, ROAD_HI = CV_H - 62;
+
 const Wave = {
   raf:null, ctx:null, cv:null, state:null,
 
@@ -4235,9 +4290,11 @@ const Wave = {
     $('act-title').textContent = isBoss ? 'Boss Encounter' : `Wave ${R.wave}`;
     $('act-sub').textContent = ENVS[R.env]?.name || '';
     $('act-status').textContent = isBoss ? 'It has been waiting.' : 'Incoming…';
-    $('act-controls').innerHTML = '';
+    $('act-controls').innerHTML =
+      `<div class="mono" style="font-size:11.5px;color:var(--dim)">${Controls.hint()}</div>`;
 
     Wave.setup(isBoss);
+    Controls.bind(Wave.cv, () => Wave.state);
     Wave.loop();
   },
 
@@ -4254,11 +4311,14 @@ const Wave = {
 
     const S = {
       frame:0, done:false, endTick:0, isBoss,
-      car:{ x:-140, y:CV_H-84, w:130, h:58, entered:false, hitCd:0 },
+      // vy must exist — Controls.steer lerps from it, and lerp(undefined,…)
+      // yields NaN which propagates into car.y and kills the renderer
+      car:{ x:-140, y:CV_H-84, vy:0, w:130, h:58, entered:false, hitCd:0 },
       zs:[], bullets:[], flames:[], mortars:[], sparks:[],
       spd: 2.5 + (R.up.nitro||0)*1.2,
-      turretCd:0, mortarCd:0, teslaCd:0, overdrive:0,
-      barricadeX: CV_W*0.28
+      turretCd:0, mortarCd:0, teslaCd:0, overdrive:0, manualCd:0,
+      barricadeX: CV_W*0.28,
+      touching:false, touchY:null
     };
     // Focus → Overdrive
     if (R.focus >= 100 && skillRank('w_over') > 0){
@@ -4286,7 +4346,8 @@ const Wave = {
         const T = ENEMIES[type];
         let hp = (T.hp + Math.floor(R.level/3)) * (R.swarm?0.5:1);
         S.zs.push({
-          type, x: CV_W*0.58 + i*(44+rng()*30), y: CV_H-96+rng()*26-13,
+          // spread across the full lane so vertical dodging is meaningful
+          type, x: CV_W*0.58 + i*(44+rng()*30), y: ROAD_LO + rng()*(ROAD_HI-ROAD_LO),
           w:T.w, h:T.h, hp, mhp:hp, spd:T.spd*(1+R.level*0.05)+rng()*0.3,
           alive:true, stun: i<stun?110:0, shield: T.shield?1:0,
           col:`hsl(${T.col[0]+rng()*20|0},${T.col[1]}%,${T.col[2]+rng()*T.col[3]|0}%)`,
@@ -4329,6 +4390,15 @@ const Wave = {
     }
 
     if (S.car.entered){
+      // player steering + manual gun (works with no upgrades bought)
+      Controls.steer(S, ROAD_LO, ROAD_HI);
+      if (Controls.firing(S) && --S.manualCd <= 0){
+        S.manualCd = 11;
+        S.bullets.push({ x:S.car.x+S.car.w, y:S.car.y+S.car.h*0.42, vx:10, alive:true });
+        Audio.sfx('shoot');
+      }
+      if (S.manualCd > 0) S.manualCd--;
+
       if (S.isBoss) Wave.boss(S, ctx, dmgMul);
       else Wave.enemies(S, ctx, dmgMul);
       Wave.weapons(S, ctx, dmgMul);
@@ -4471,7 +4541,9 @@ const Wave = {
                          dmg:T.dmg, col:'#88ff44' });
       }
       const front = S.car.x + S.car.w, back = S.car.x;
-      if (z.x < front+8 && z.x+z.w > back-4){
+      // vertical overlap too — without this steering would be cosmetic
+      const dy = Math.abs((z.y + z.h/2) - (S.car.y + S.car.h/2));
+      if (z.x < front+8 && z.x+z.w > back-4 && dy < 38){
         if (z.shield){ z.shield = 0; Audio.sfx('hit'); continue; }
         const contact = (2 + (R.up.ram||0)*5 + (R.up.plow||0)*2) * dmgMul;
         Wave.damageZ(z, contact, S);
@@ -4546,7 +4618,8 @@ const Wave = {
       for (const z of S.zs){
         if (!z.alive) continue;
         const d = z.x - (car.x+car.w);
-        if (d >= 0 && d < range) Wave.damageZ(z, fd, S);
+        const dy = Math.abs((z.y+z.h/2) - (car.y+car.h/2));
+        if (d >= 0 && d < range && dy < 52) Wave.damageZ(z, fd, S);
       }
       if (S.isBoss && R.boss && R.boss.x - (car.x+car.w) < range)
         Wave.damageBoss(fd*0.6, S);
@@ -4596,7 +4669,8 @@ const Wave = {
     }
     Run.levelComplete();
   },
-  stop(){ if (Wave.raf){ cancelAnimationFrame(Wave.raf); Wave.raf = null; } }
+  stop(){ if (Wave.raf){ cancelAnimationFrame(Wave.raf); Wave.raf = null; }
+    Controls.unbind(); }
 };
 
 /* ═══════════════ NO-TRIVIA SURVIVAL ═══════════════
@@ -4632,7 +4706,7 @@ const NoTrivia = {
       done:false, endTick:0,
       touching:false, touchY:null
     };
-    NoTrivia.bindTouch(cv);
+    Controls.bind(cv, () => NoTrivia.S);
     if (touch){
       $('nt-slow').onclick = () => { NoTrivia.S.spd = Math.max(1.6, NoTrivia.S.spd - 0.8); Audio.sfx('click'); };
       $('nt-fast').onclick = () => { NoTrivia.S.spd = Math.min(6, NoTrivia.S.spd + 0.8); Audio.sfx('click'); };
@@ -4640,34 +4714,6 @@ const NoTrivia = {
     NoTrivia.loop();
   },
 
-  // Touch steering: the car tracks your finger vertically and fires while
-  // it is down. Without this the mode has no input at all on a phone.
-  bindTouch(cv){
-    NoTrivia.unbindTouch();
-    const toCanvasY = e => {
-      const r = cv.getBoundingClientRect();
-      return (e.clientY - r.top) * (CV_H / r.height);
-    };
-    const down = e => { const S = NoTrivia.S; if (!S) return;
-      e.preventDefault(); S.touching = true; S.touchY = toCanvasY(e);
-      if (cv.setPointerCapture && e.pointerId != null) { try{ cv.setPointerCapture(e.pointerId); }catch(_){} } };
-    const move = e => { const S = NoTrivia.S; if (!S || !S.touching) return;
-      e.preventDefault(); S.touchY = toCanvasY(e); };
-    const up   = e => { const S = NoTrivia.S; if (!S) return; S.touching = false; };
-    NoTrivia._h = { cv, down, move, up };
-    cv.addEventListener('pointerdown', down, { passive:false });
-    cv.addEventListener('pointermove', move, { passive:false });
-    addEventListener('pointerup', up);
-    addEventListener('pointercancel', up);
-  },
-  unbindTouch(){
-    const h = NoTrivia._h; if (!h) return;
-    h.cv.removeEventListener('pointerdown', h.down);
-    h.cv.removeEventListener('pointermove', h.move);
-    removeEventListener('pointerup', h.up);
-    removeEventListener('pointercancel', h.up);
-    NoTrivia._h = null;
-  },
   loop(){
     const S = NoTrivia.S; if (!S) return;
     NoTrivia.raf = requestAnimationFrame(NoTrivia.loop);
@@ -4679,21 +4725,15 @@ const NoTrivia = {
     ctx.clearRect(0,0,CV_W,CV_H);
     Render.bg(ctx, CV_W, CV_H, S.frame, S.spd/2.5, R.env, R.weather, R.night);
 
-    // input — touch drag takes priority, otherwise keys/gamepad
-    if (S.touching && S.touchY != null){
-      const target = clamp(S.touchY - S.car.h/2, CV_H-118, CV_H-64);
-      S.car.y = lerp(S.car.y, target, 0.28);
-      S.car.vy = 0;
-    } else {
+    // input
+    Controls.steer(S, ROAD_LO, ROAD_HI);
+    if (!S.touching){
       const ax = Input.axis();
-      S.car.vy = lerp(S.car.vy, ax.y * 4 * G.settings.sensitivity, 0.25);
-      S.car.y = clamp(S.car.y + S.car.vy, CV_H-118, CV_H-64);
       if (ax.x > 0) S.spd = Math.min(6, S.spd + 0.05);
       if (ax.x < 0) S.spd = Math.max(1.6, S.spd - 0.05);
     }
 
-    // fire — holding a finger down counts as firing
-    if ((Input.firing() || S.touching) && --S.fireCd <= 0 && R.ammo > 0){
+    if (Controls.firing(S) && --S.fireCd <= 0 && R.ammo > 0){
       S.fireCd = 9; R.ammo--;
       S.bullets.push({ x:S.car.x+S.car.w, y:S.car.y+18, vx:11, alive:true });
       Audio.sfx('shoot');
@@ -4704,7 +4744,7 @@ const NoTrivia = {
     if (S.frame % Math.max(24, 70 - R.level*3) === 0){
       const type = R.rng.pick(R.enemyPool); const T = ENEMIES[type];
       const hp = T.hp + Math.floor(R.level/2);
-      S.zs.push({ type, x:CV_W+30, y:CV_H-96+R.rng()*30-15, w:T.w, h:T.h,
+      S.zs.push({ type, x:CV_W+30, y:ROAD_LO + R.rng()*(ROAD_HI-ROAD_LO), w:T.w, h:T.h,
         hp, mhp:hp, spd:T.spd*(1+R.level*0.04), alive:true, stun:0, shield:0,
         col:`hsl(${T.col[0]},${T.col[1]}%,${T.col[2]}%)`, bob:R.rng()*6.28, atkCd:0 });
     }
@@ -4788,7 +4828,7 @@ const NoTrivia = {
     Shop.open(true);
   },
   stop(){ if (NoTrivia.raf){ cancelAnimationFrame(NoTrivia.raf); NoTrivia.raf = null; }
-    NoTrivia.unbindTouch(); }
+    Controls.unbind(); }
 };
 
 /* ═══════════════ ROGUELIKE MAP ═══════════════ */
