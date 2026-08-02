@@ -3996,8 +3996,14 @@ const Trivia = {
     Trivia.stopTimer();
     Trivia.left = sec; Trivia.tickStart = performance.now();
     const fill = $('t-fill'), lbl = $('t-lbl');
+    let last = performance.now();
     const tick = () => {
-      const elapsed = (performance.now() - Trivia.tickStart)/1000;
+      // Freeze the clock while a modal or the pause menu is up. Without this
+      // the timer runs down behind tutorial tips, events and the pause screen.
+      const now = performance.now();
+      if (UI.paused || UI.modalOpen()) Trivia.tickStart += (now - last);
+      last = now;
+      const elapsed = (now - Trivia.tickStart)/1000;
       Trivia.left = sec - elapsed;
       const pct = clamp(Trivia.left/sec, 0, 1);
       if (fill){ fill.style.width = (pct*100)+'%';
@@ -4297,7 +4303,7 @@ const Wave = {
     const S = Wave.state, ctx = Wave.ctx;
     if (!S || !ctx) return;
     Wave.raf = requestAnimationFrame(Wave.loop);
-    if (UI.paused) return;
+    if (UI.paused || UI.modalOpen()) return;
     const dt = 1/60;
     Run.tickClock(dt);
     S.frame++;
@@ -4606,24 +4612,66 @@ const NoTrivia = {
     $('act-title').textContent = `Sector ${R.level}`;
     $('act-sub').textContent = `${ENVS[R.env]?.name||''} · scavenge and survive`;
     $('act-status').textContent = 'Drive. Collect parts. Reach the safehouse.';
-    $('act-controls').innerHTML =
-      `<div class="mono" style="font-size:11.5px;color:var(--dim)">
-        ${Keybind.label(G.settings.keys.up)}/${Keybind.label(G.settings.keys.down)} move ·
-        ${Keybind.label(G.settings.keys.fire)} fire · collect ⚙ parts · survive the timer</div>`;
+    const touch = matchMedia('(pointer:coarse)').matches;
+    $('act-controls').innerHTML = touch
+      ? `<div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+           <button class="btn btn-o btn-sm" id="nt-slow">− Slow</button>
+           <span class="mono" style="font-size:11.5px;color:var(--dim)">drag the road to steer · auto-fire</span>
+           <button class="btn btn-o btn-sm" id="nt-fast">Fast +</button>
+         </div>`
+      : `<div class="mono" style="font-size:11.5px;color:var(--dim)">
+           ${Keybind.label(G.settings.keys.up)}/${Keybind.label(G.settings.keys.down)} move ·
+           ${Keybind.label(G.settings.keys.fire)} fire ·
+           ${Keybind.label(G.settings.keys.left)}/${Keybind.label(G.settings.keys.right)} speed</div>`;
     const cv = $('game-cv'); cv.width = CV_W; cv.height = CV_H;
     NoTrivia.S = {
       ctx: cv.getContext('2d'), frame:0, spd:3.2,
       car:{ x:CV_W*0.2, y:CV_H-90, w:130, h:58, vy:0 },
       zs:[], pickups:[], bullets:[], fireCd:0,
       target: 60*45,   // 45 seconds per sector
-      done:false, endTick:0
+      done:false, endTick:0,
+      touching:false, touchY:null
     };
+    NoTrivia.bindTouch(cv);
+    if (touch){
+      $('nt-slow').onclick = () => { NoTrivia.S.spd = Math.max(1.6, NoTrivia.S.spd - 0.8); Audio.sfx('click'); };
+      $('nt-fast').onclick = () => { NoTrivia.S.spd = Math.min(6, NoTrivia.S.spd + 0.8); Audio.sfx('click'); };
+    }
     NoTrivia.loop();
+  },
+
+  // Touch steering: the car tracks your finger vertically and fires while
+  // it is down. Without this the mode has no input at all on a phone.
+  bindTouch(cv){
+    NoTrivia.unbindTouch();
+    const toCanvasY = e => {
+      const r = cv.getBoundingClientRect();
+      return (e.clientY - r.top) * (CV_H / r.height);
+    };
+    const down = e => { const S = NoTrivia.S; if (!S) return;
+      e.preventDefault(); S.touching = true; S.touchY = toCanvasY(e);
+      if (cv.setPointerCapture && e.pointerId != null) { try{ cv.setPointerCapture(e.pointerId); }catch(_){} } };
+    const move = e => { const S = NoTrivia.S; if (!S || !S.touching) return;
+      e.preventDefault(); S.touchY = toCanvasY(e); };
+    const up   = e => { const S = NoTrivia.S; if (!S) return; S.touching = false; };
+    NoTrivia._h = { cv, down, move, up };
+    cv.addEventListener('pointerdown', down, { passive:false });
+    cv.addEventListener('pointermove', move, { passive:false });
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
+  },
+  unbindTouch(){
+    const h = NoTrivia._h; if (!h) return;
+    h.cv.removeEventListener('pointerdown', h.down);
+    h.cv.removeEventListener('pointermove', h.move);
+    removeEventListener('pointerup', h.up);
+    removeEventListener('pointercancel', h.up);
+    NoTrivia._h = null;
   },
   loop(){
     const S = NoTrivia.S; if (!S) return;
     NoTrivia.raf = requestAnimationFrame(NoTrivia.loop);
-    if (UI.paused) return;
+    if (UI.paused || UI.modalOpen()) return;
     const ctx = S.ctx; S.frame++;
     Run.tickClock(1/60);
     R.distance += S.spd*0.6;
@@ -4631,15 +4679,21 @@ const NoTrivia = {
     ctx.clearRect(0,0,CV_W,CV_H);
     Render.bg(ctx, CV_W, CV_H, S.frame, S.spd/2.5, R.env, R.weather, R.night);
 
-    // input
-    const ax = Input.axis();
-    S.car.vy = lerp(S.car.vy, ax.y * 4 * G.settings.sensitivity, 0.25);
-    S.car.y = clamp(S.car.y + S.car.vy, CV_H-118, CV_H-64);
-    if (ax.x > 0) S.spd = Math.min(6, S.spd + 0.05);
-    if (ax.x < 0) S.spd = Math.max(1.6, S.spd - 0.05);
+    // input — touch drag takes priority, otherwise keys/gamepad
+    if (S.touching && S.touchY != null){
+      const target = clamp(S.touchY - S.car.h/2, CV_H-118, CV_H-64);
+      S.car.y = lerp(S.car.y, target, 0.28);
+      S.car.vy = 0;
+    } else {
+      const ax = Input.axis();
+      S.car.vy = lerp(S.car.vy, ax.y * 4 * G.settings.sensitivity, 0.25);
+      S.car.y = clamp(S.car.y + S.car.vy, CV_H-118, CV_H-64);
+      if (ax.x > 0) S.spd = Math.min(6, S.spd + 0.05);
+      if (ax.x < 0) S.spd = Math.max(1.6, S.spd - 0.05);
+    }
 
-    // fire
-    if (Input.firing() && --S.fireCd <= 0 && R.ammo > 0){
+    // fire — holding a finger down counts as firing
+    if ((Input.firing() || S.touching) && --S.fireCd <= 0 && R.ammo > 0){
       S.fireCd = 9; R.ammo--;
       S.bullets.push({ x:S.car.x+S.car.w, y:S.car.y+18, vx:11, alive:true });
       Audio.sfx('shoot');
@@ -4733,7 +4787,8 @@ const NoTrivia = {
     Run.rollWorld();
     Shop.open(true);
   },
-  stop(){ if (NoTrivia.raf){ cancelAnimationFrame(NoTrivia.raf); NoTrivia.raf = null; } }
+  stop(){ if (NoTrivia.raf){ cancelAnimationFrame(NoTrivia.raf); NoTrivia.raf = null; }
+    NoTrivia.unbindTouch(); }
 };
 
 /* ═══════════════ ROGUELIKE MAP ═══════════════ */
@@ -4810,14 +4865,21 @@ const UI = {
     $('gm-title').textContent = title; $('gm-body').innerHTML = html;
     UI.openModal('modal-generic');
   },
-  tip(key, title, body){
-    if (!G.settings.tutorials || G.story.seen['tip_'+key]) return;
+  // Any open modal freezes the question timer — see Trivia.startTimer.
+  modalOpen(){ return !!document.querySelector('.modal-bg.active'); },
+
+  // `after` runs once the tip is dismissed. Callers that start a run must
+  // pass it, or the game begins ticking behind the tutorial the player is
+  // still reading.
+  tip(key, title, body, after){
+    const done = () => { if (after) after(); };
+    if (!G.settings.tutorials || G.story.seen['tip_'+key]){ done(); return; }
     G.story.seen['tip_'+key] = true; Save.write();
     $('tut-title').textContent = title; $('tut-body').innerHTML = body;
     UI.openModal('modal-tut');
-    $('tut-ok').onclick  = () => UI.closeModal('modal-tut');
+    $('tut-ok').onclick  = () => { UI.closeModal('modal-tut'); done(); };
     $('tut-off').onclick = () => { G.settings.tutorials = false; Save.write();
-                                   UI.closeModal('modal-tut'); };
+                                   UI.closeModal('modal-tut'); done(); };
   },
 
   /* ── question rendering ─────────────────────────────── */
@@ -5296,13 +5358,18 @@ const Menu = {
   begin(mode, opts){
     Run.create(mode, opts||{});
     UI.stack = ['s-menu'];
+    const touch = matchMedia('(pointer:coarse)').matches;
+    // the run only starts once the tip is dismissed
     if (mode === 'notrivia')
       UI.tip('notrivia','No-Trivia Survival',
-        'No questions here. Steer with the movement keys, hold fire, and collect <b>parts</b>, <b>fuel</b> and <b>ammo</b>. Reach the safehouse before the fuel runs out.');
+        'No questions here. Collect <b>parts</b>, <b>fuel</b> and <b>ammo</b>, and reach the safehouse before the fuel runs out.<br><br>' +
+        (touch ? '<b>Drag anywhere on the road</b> to steer. You fire automatically while your finger is down. The <b>−</b> and <b>+</b> buttons change speed.'
+               : 'Steer with the movement keys and hold fire.'),
+        () => Run.begin());
     else
       UI.tip('hollow','The Hollowing',
-        'Wrong answers raise <b>Hollowing</b>. As it climbs, the interface itself decays — first you lose time, then an answer becomes unreadable, then one is deleted outright.<br><br>Correct answers push it back. Reach 100% and you are gone.');
-    Run.begin();
+        'Wrong answers raise <b>Hollowing</b>. As it climbs, the interface itself decays — first you lose time, then answers become unreadable.<br><br>Correct answers push it back. Reach 100% and you are gone.',
+        () => Run.begin());
   },
   customBuilder(){
     const mods = Object.keys(RUN_MODS);
