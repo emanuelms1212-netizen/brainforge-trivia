@@ -1,0 +1,28 @@
+# Netlify configuration
+#
+# There is no build step — road-to-ruin.html is a single self-contained file
+# with no external references, so the repo root is published as-is.
+#
+# The repo root already has an index.html (BrainForge Trivia), so the rewrite
+# below serves the game at / without moving or duplicating the 475KB file.
+# BrainForge remains reachable at /index.html.
+
+[build]
+  publish = "."
+  command = ""
+
+# Serve the game at the site root (200 = rewrite, not a redirect, so the
+# URL stays clean rather than bouncing to /road-to-ruin.html)
+[[redirects]]
+  from = "/"
+  to = "/road-to-ruin.html"
+  status = 200
+
+[[headers]]
+  for = "/road-to-ruin.html"
+  [headers.values]
+    # The page holds all progress in localStorage and ships ~190KB of
+    # base64 fonts, so let the browser keep it but always revalidate.
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
