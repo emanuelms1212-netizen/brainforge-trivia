@@ -1160,6 +1160,9 @@ const MODES = {
   notrivia:  { name:'No-Trivia Survival', icon:'🔧', tag:'',
     desc:'Not one question. Drive, scavenge, craft, survive. A whole other game.',
     trivia:false, unlock:()=>true },
+  recitation:{ name:'Recitation', icon:'🎙️', tag:'new',
+    desc:'Pure trivia. No driving, no combat — only the questions, forever, getting harder.',
+    trivia:true, unlock:()=>true },
   daily:     { name:'Daily Challenge', icon:'📅', tag:'daily',
     desc:'One seed. One run. Everybody in the world gets the same road.',
     trivia:true, unlock:()=>true },
@@ -1195,33 +1198,50 @@ const MODES = {
     trivia:true, unlock:()=>G.profile.level >= 6 }
 };
 
-/* ── VEHICLE UPGRADES ──────────────────────────────────── */
+/* ── VEHICLE UPGRADES ──────────────────────────────────────
+   `req` gates a upgrade behind a run level so the rig is built up over a
+   run instead of being fully armed by level two. `metaTest` additionally
+   gates a few behind career progress, so there is always something on the
+   board you have not earned yet.                                        */
 const UPGRADES = {
-  nitro:  { name:'Nitro Boost',    icon:'🔥', costs:[30,65,110],
-    desc:'+Speed. You cover more road per wave, so you meet more of them.' },
-  ram:    { name:'Spike Ram',      icon:'⚡', costs:[25,55,95],
-    desc:'Front spikes. Heavy contact damage on anything you meet head-on.' },
-  turret: { name:'Roof Turret',    icon:'🔫', costs:[40,80,135],
-    desc:'Auto-firing gun. One extra barrel per tier.' },
-  flame:  { name:'Flame Thrower',  icon:'🌋', costs:[50,95,160],
-    desc:'Cone of fire off the flank. Melts clustered Hollow.' },
-  armor:  { name:'Armor Plating',  icon:'🛡️', costs:[35,70,115],
+  // ── tier 1: available from the off ──
+  ram:    { name:'Spike Ram',      icon:'⚡', costs:[40,85,145], req:1,
+    desc:'Front spikes. Extra contact damage on anything you meet head-on.' },
+  armor:  { name:'Armor Plating',  icon:'🛡️', costs:[50,100,165], req:1,
     desc:'Reduces every source of damage, including wrong answers.' },
-  emp:    { name:'EMP Mine',       icon:'💥', costs:[45,85,140],
-    desc:'Detonates at wave start. Stuns a cluster before they reach you.' },
-  tesla:  { name:'Tesla Coil',     icon:'🌩️', costs:[60,110,180],
-    desc:'Chains lightning between nearby Hollow. Scales with crowd size.' },
-  mortar: { name:'Mortar Rack',    icon:'🎯', costs:[70,125,200],
-    desc:'Lobs shells downrange. Hits what the turret cannot reach.' },
-  siphon: { name:'Blood Siphon',   icon:'🩸', costs:[55,100,170],
-    desc:'Recover Integrity on kill. Aggression becomes sustain.' },
-  plow:   { name:'Reinforced Plow',icon:'🚜', costs:[40,75,125],
+  nitro:  { name:'Nitro Boost',    icon:'🔥', costs:[45,95,155], req:1,
+    desc:'+Speed. You cover more road per wave, so you meet more of them.' },
+  // ── unlocked as the run goes on ──
+  plow:   { name:'Reinforced Plow',icon:'🚜', costs:[60,115,185], req:3,
     desc:'Knocks the Hollow aside instead of grinding through them.' },
-  drone:  { name:'Scout Drone',    icon:'🛸', costs:[65,115,190],
+  turret: { name:'Roof Turret',    icon:'🔫', costs:[75,140,225], req:3,
+    desc:'Auto-firing gun that works alongside your own. One barrel per tier.' },
+  emp:    { name:'EMP Mine',       icon:'💥', costs:[85,150,245], req:5,
+    desc:'Detonates at wave start. Stuns a cluster before they reach you.' },
+  flame:  { name:'Flame Thrower',  icon:'🌋', costs:[95,170,270], req:5,
+    desc:'Cone of fire off the flank. Melts clustered Hollow.' },
+  siphon: { name:'Blood Siphon',   icon:'🩸', costs:[105,180,290], req:8,
+    desc:'Recover Integrity on kill. Aggression becomes sustain.' },
+  tesla:  { name:'Tesla Coil',     icon:'🌩️', costs:[115,195,310], req:8,
+    desc:'Chains lightning between nearby Hollow. Scales with crowd size.' },
+  // ── late run, and gated on career progress too ──
+  mortar: { name:'Mortar Rack',    icon:'🎯', costs:[135,225,360], req:12,
+    metaTest:()=>G.profile.level>=5, metaLabel:'Doctrine level 5',
+    desc:'Lobs shells downrange. Hits what the turret cannot reach.' },
+  drone:  { name:'Scout Drone',    icon:'🛸', costs:[125,210,340], req:12,
+    metaTest:()=>G.stats.kills>=500, metaLabel:'500 Hollow destroyed',
     desc:'Auto-collects scrap and tags a wrong answer each question.' },
-  scanner:{ name:'Memory Scanner', icon:'📡', costs:[80,140,220],
+  scanner:{ name:'Memory Scanner', icon:'📡', costs:[145,245,385], req:15,
+    metaTest:()=>G.stats.correct>=250, metaLabel:'250 correct answers',
     desc:'Slows the question timer. Higher tiers slow it further.' }
 };
+// why an upgrade is unavailable, or null when it can be bought
+function upgradeLock(key){
+  const u = UPGRADES[key];
+  if (u.metaTest && !u.metaTest()) return u.metaLabel;
+  if (R && R.level < (u.req||1)) return `Level ${u.req}`;
+  return null;
+}
 
 /* ── SKILL TREE ────────────────────────────────────────── */
 const SKILL_BRANCHES = [
@@ -1417,6 +1437,41 @@ const EVENTS = [
     opts:[ {l:'Wave back', f:r=>{ R.waved = true; hollow(-12); Ach.check({waved:true}); }},
            {l:'Accelerate', f:r=>{ R.guilt++; }} ] }
 ];
+/* ── BOONS — Recitation's between-level reward ─────────────
+   Vehicle upgrades are meaningless with no combat, so pure trivia offers a
+   choice of three of these instead. Everything here bites on the question
+   loop rather than the road.                                              */
+const BOONS = [
+  { id:'mend',   n:'Steady Breath',  i:'❤️', d:'Restore 30 Integrity.',
+    f:()=>heal(30) },
+  { id:'maxhp',  n:'Deeper Lungs',   i:'🫁', d:'+15 maximum Integrity, and heal it.',
+    f:()=>{ R.maxHp += 15; heal(15); } },
+  { id:'time',   n:'Long Pause',     i:'⏱️', d:'+2s on every question timer.',
+    f:()=>{ R.bonusTime = (R.bonusTime||0) + 2; } },
+  { id:'purge',  n:'Rehearsal',      i:'🧼', d:'Clear 25 Hollowing now, and gain a Purge.',
+    f:()=>{ hollow(-25); R.cons.purge++; } },
+  { id:'anchor', n:'Anchored',       i:'⚓', d:'Wrong answers raise Hollowing 25% less.',
+    f:()=>{ R.hollowMul *= 0.75; } },
+  { id:'thick',  n:'Thick Skin',     i:'🪨', d:'Wrong answers deal 25% less damage.',
+    f:()=>{ R.dmgTakenMul *= 0.75; } },
+  { id:'fifty',  n:'Elimination',    i:'✂️', d:'+3 fifty-fifty charges.',
+    f:()=>{ R.cons.fifty += 3; } },
+  { id:'freeze', n:'Held Note',      i:'❄️', d:'+3 timer freezes.',
+    f:()=>{ R.cons.freeze += 3; } },
+  { id:'skip',   n:'Pass',           i:'⏭️', d:'+2 skips.',
+    f:()=>{ R.cons.skip += 2; } },
+  { id:'score',  n:'Perfect Pitch',  i:'⭐', d:'+30% scrap and score from answers.',
+    f:()=>{ R.scrapMul *= 1.3; } },
+  { id:'streak', n:'Momentum',       i:'🔥', d:'Streak bonuses count double.',
+    f:()=>{ R.streakMul = (R.streakMul||1) * 2; } },
+  { id:'second', n:'Second Guess',   i:'🤔', d:'One wrong answer per level does not count.',
+    f:()=>{ R.boonSecondGuess = true; } },
+  { id:'insight',n:'Insight',        i:'👁️', d:'One wrong option is revealed every question.',
+    f:()=>{ R.freeFifty += 1; } },
+  { id:'xp',     n:'Ledger',         i:'📒', d:'+40% XP for the rest of this run.',
+    f:()=>{ R.xpMul += 0.4; } }
+];
+
 const RELICS = [
   { id:'thimble', n:'Brass Thimble',  i:'🧵', d:'+15% scrap. It was somebody’s.' , f:()=>R.scrapMul += .15 },
   { id:'compass', n:'Dead Compass',   i:'🧭', d:'Always points at the next boss. +10% damage.', f:()=>R.dmgMul += .10 },
@@ -3709,7 +3764,8 @@ const Run = {
       boss: null, bossIndex: 0, mapDepth: 0, mapNodes: null, mapPos: null,
       infection: 0, barricade: 100,
       dead: false, won: false, phase: 'init',
-      questionMods: [], nextWaveBonus: 1, pendingBonusQ: false, waved: false
+      questionMods: [], nextWaveBonus: 1, pendingBonusQ: false, waved: false,
+      triviaOnly: false, bonusTime: 0, streakMul: 1, boonSecondGuess: false, boons: []
     };
 
     // difficulty & skill baselines
@@ -3735,6 +3791,7 @@ const Run = {
         R.enemyPool = ch ? ch.enemies : ['shambler'];
         break;
       case 'endless':   R.enemyPool = ['shambler','runner']; R.endless = true; break;
+      case 'recitation':R.endless = true; R.triviaOnly = true; R.enemyPool = []; break;
       case 'notrivia':  R.enemyPool = ['shambler','runner','brute']; R.endless = true;
                         R.noTrivia = true; R.fuel = 100; R.ammo = 60; R.parts = 0; break;
       case 'daily':     R.enemyPool = ['shambler','runner','spitter']; R.levelsTarget = 8;
@@ -3819,6 +3876,7 @@ const Run = {
     // objective / end checks
     if (R.levelsTarget && R.level > R.levelsTarget){ Run.finish(true); return; }
     if (R.rogue){ Rogue.advance(); return; }
+    if (R.triviaOnly){ Boons.offer(); return; }
     if (R.noShop) { Run.nextLevel(); return; }
     Shop.open();
   },
@@ -3840,8 +3898,8 @@ const Run = {
       R.weather = roll < 0.45 ? base : roll < 0.62 ? 'fog' : roll < 0.74 ? 'rain'
                 : roll < 0.8 ? 'storm' : null;
     }
-    // procedural event
-    if (!R.noTrivia && R.level > 1 && r() < 0.34 + skillVal('s_loot',0.15)*0.3){
+    // procedural event (roadside — not in pure-trivia runs)
+    if (!R.noTrivia && !R.triviaOnly && R.level > 1 && r() < 0.34 + skillVal('s_loot',0.15)*0.3){
       Events.roll();
       return;
     }
@@ -3964,7 +4022,7 @@ const Trivia = {
       const keys = Object.keys(MODIFIERS).filter(k=>k!=='sudden' || R.rng()<0.15);
       mods.push(R.rng.pick(keys));
     }
-    const spec = { time: (G.settings.timerSeconds + skillVal('r_time',1.5)) * R.timeMul,
+    const spec = { time: (G.settings.timerSeconds + skillVal('r_time',1.5) + (R.bonusTime||0)) * R.timeMul,
                    scrapMul:1, dmgMul:1, parts:1 };
     for (const m of mods) MODIFIERS[m].apply(spec);
     spec.time = Math.max(3, spec.time - hs.timeCut);
@@ -4042,7 +4100,7 @@ const Trivia = {
 
       const speedPct = clamp(Trivia.left/spec.time, 0, 1);
       const base = { easy:10, medium:16, hard:24, expert:34 }[q.diff] || 12;
-      const streakBonus = Math.min(R.streak, 10) * 2;
+      const streakBonus = Math.min(R.streak, 10) * 2 * (R.streakMul || 1);
       const earn = Math.round((base + speedPct*14 + streakBonus) * spec.scrapMul);
       addScrap(earn);
       hollow(-(1.2 + skillVal('r_cleanse', 0.8)));
@@ -4054,7 +4112,7 @@ const Trivia = {
                   firstQGeo: R.answered===1 && q.cat==='Geography' });
     } else {
       // Second Guess skill absorbs the first miss of a level
-      if (R.secondGuess && skillRank('r_second') > 0 && sel !== null){
+      if (R.secondGuess && (skillRank('r_second') > 0 || R.boonSecondGuess) && sel !== null){
         R.secondGuess = false;
         UI.feedback(false, 'Second Guess — that one did not count.');
         Audio.sfx('back');
@@ -4090,6 +4148,9 @@ const Trivia = {
   },
   levelDone(){
     if (R.pendingBonusQ){ R.pendingBonusQ = false; addScrap(120); }
+    // pure-trivia runs have no road phase, but must still go through
+    // levelComplete so stats, the Lucidity heal and level++ all apply
+    if (R.triviaOnly){ Run.levelComplete(); return; }
     Wave.start();
   },
 
@@ -4344,7 +4405,9 @@ const Wave = {
       for (let i=0;i<count;i++){
         const type = rng.pick(R.enemyPool);
         const T = ENEMIES[type];
-        let hp = (T.hp + Math.floor(R.level/3)) * (R.swarm?0.5:1);
+        // scales sooner than before: tier-1 upgrades were one-shotting whole
+        // waves, which made the first levels trivial and the shop pointless
+        let hp = (T.hp * (1 + R.level*0.14) + Math.floor(R.level/2)) * (R.swarm?0.5:1);
         S.zs.push({
           // spread across the full lane so vertical dodging is meaningful
           type, x: CV_W*0.58 + i*(44+rng()*30), y: ROAD_LO + rng()*(ROAD_HI-ROAD_LO),
@@ -4353,7 +4416,7 @@ const Wave = {
           col:`hsl(${T.col[0]+rng()*20|0},${T.col[1]}%,${T.col[2]+rng()*T.col[3]|0}%)`,
           // must survive ~a third of a second in contact before it can land a hit,
           // so the ram kills weak Hollow outright instead of trading with every one
-          bob: rng()*6.28, atkCd:20
+          bob: rng()*6.28, atkCd:20, rammed:false
         });
       }
     }
@@ -4545,8 +4608,15 @@ const Wave = {
       const dy = Math.abs((z.y + z.h/2) - (S.car.y + S.car.h/2));
       if (z.x < front+8 && z.x+z.w > back-4 && dy < 38){
         if (z.shield){ z.shield = 0; Audio.sfx('hit'); continue; }
-        const contact = (2 + (R.up.ram||0)*5 + (R.up.plow||0)*2) * dmgMul;
-        Wave.damageZ(z, contact, S);
+        // One ram strike per Hollow, not damage every frame it overlaps.
+        // Streaming contact meant simply driving was ~120 dps, so waves
+        // cleared themselves and upgrades barely registered. Now the ram
+        // decides whether you plough through or have to shoot.
+        if (!z.rammed){
+          z.rammed = true;
+          const contact = (2 + (R.up.ram||0)*3 + (R.up.plow||0)*1.5) * dmgMul;
+          Wave.damageZ(z, contact, S);
+        }
         if (z.alive && z.atkCd <= 0){
           z.atkCd = 45;
           if (R.static){ R.barricade = Math.max(0, R.barricade - T.dmg*0.5); }
@@ -4587,7 +4657,7 @@ const Wave = {
     const car = S.car;
     // turret
     if (R.up.turret > 0 && --S.turretCd <= 0){
-      S.turretCd = Math.max(6, 28 - R.up.turret*5);
+      S.turretCd = Math.max(9, 34 - R.up.turret*6);
       for (let b=0;b<R.up.turret;b++)
         S.bullets.push({ x:car.x+car.w, y:car.y+10+b*7, vx:9, alive:true });
       Audio.sfx('shoot');
@@ -4998,6 +5068,7 @@ const UI = {
     else if (m==='escape')   t = `Horde ${Math.round(R.hordeDist)}m back · ${(R.distance/1000).toFixed(2)}km travelled`;
     else if (m==='outbreak') t = `Infection ${Math.round(R.infection)}% — contain it`;
     else if (m==='bossrush') t = `Boss ${R.bossIndex+1} of 5`;
+    else if (m==='recitation') t = `Level ${R.level} · keep reciting · ${R.boons.length} boons taken`;
     else if (R.levelsTarget) t = `Level ${R.level} of ${R.levelsTarget}`;
     else t = `Level ${R.level} · endless`;
     if (R.runMods.length) t += `  ·  ${R.runMods.map(x=>RUN_MODS[x].n).join(', ')}`;
@@ -5331,8 +5402,8 @@ const UI = {
 /* ═══════════════ MENU ═══════════════ */
 const Menu = {
   render(){
-    const order = ['story','endless','notrivia','daily','weekly','bossrush','rogue','convoy',
-                   'laststand','escape','outbreak','nightmare','hardcore','custom'];
+    const order = ['story','endless','recitation','notrivia','daily','weekly','bossrush','rogue',
+                   'convoy','laststand','escape','outbreak','nightmare','hardcore','custom'];
     const extras = [
       ['archive','📚','The Archive','Documents, logs and the truth, slowly.'],
       ['ach','🏆','Achievements',`${Ach.earned()} of ${ACHIEVEMENTS.length} unlocked.`],
@@ -5405,6 +5476,12 @@ const Menu = {
         'No questions here. Collect <b>parts</b>, <b>fuel</b> and <b>ammo</b>, and reach the safehouse before the fuel runs out.<br><br>' +
         (touch ? '<b>Drag anywhere on the road</b> to steer. You fire automatically while your finger is down. The <b>−</b> and <b>+</b> buttons change speed.'
                : 'Steer with the movement keys and hold fire.'),
+        () => Run.begin());
+    else if (mode === 'recitation')
+      UI.tip('recitation','Recitation',
+        'No driving and no combat — only the questions, escalating forever.<br><br>' +
+        'After every level you pick one of three <b>boons</b>. Wrong answers still raise ' +
+        '<b>Hollowing</b>, which eats your timer and then the legibility of your options.',
         () => Run.begin());
     else
       UI.tip('hollow','The Hollowing',
@@ -5704,21 +5781,23 @@ const Shop = {
     const grid = $('shop-grid');
     grid.innerHTML = Object.keys(UPGRADES).map(k => {
       const u = UPGRADES[k], t = R.up[k] || 0, maxed = t >= 3;
+      const lock = t > 0 ? null : upgradeLock(k);   // already-owned gear stays upgradable
       const cost = maxed ? 0 : Math.round(u.costs[t] * (1 - skillVal('s_cheap',0.09)));
-      const afford = !maxed && R.scrap >= cost;
+      const afford = !maxed && !lock && R.scrap >= cost;
       const pips = [0,1,2].map(i =>
         `<div class="pip ${i<t?(maxed?'mx':'on'):''}"></div>`).join('');
       const btn = maxed ? `<button class="ubtn full" disabled>MAXED</button>`
+        : lock ? `<button class="ubtn broke" disabled>🔒 ${lock}</button>`
         : `<button class="ubtn ${afford?'buy':'broke'}" data-k="${k}" ${afford?'':'disabled'}>
             ${afford?`Tier ${t+1} — ${cost} ⚙`:`${cost} ⚙ needed`}</button>`;
-      return `<div class="ucard ${maxed?'maxed':t>0?'owned':''}">
+      return `<div class="ucard ${maxed?'maxed':t>0?'owned':''}" ${lock?'style="opacity:.55"':''}>
         <div class="u-top"><span class="u-icon">${u.icon}</span><span class="u-name">${u.name}</span></div>
         <div class="u-desc">${u.desc}</div>
         <div class="pips">${pips}</div>${btn}</div>`; }).join('');
     $$('#shop-grid .ubtn.buy').forEach(b => b.onclick = () => {
       const k = b.dataset.k, t = R.up[k] || 0;
       const cost = Math.round(UPGRADES[k].costs[t] * (1 - skillVal('s_cheap',0.09)));
-      if (R.scrap < cost || t >= 3){ Audio.sfx('deny'); return; }
+      if (R.scrap < cost || t >= 3 || (t === 0 && upgradeLock(k))){ Audio.sfx('deny'); return; }
       addScrap(-cost); R.up[k] = t + 1;
       Stats.bump('upgradesBought');
       Audio.sfx('buy'); Shop.render(); Shop.preview(); Ach.check({}); });
@@ -5741,6 +5820,40 @@ const Shop = {
       ctx.font = '13px "Share Tech Mono",monospace'; ctx.fillStyle = '#a855f7';
       ctx.fillText('RELICS: ' + R.relics.map(r=>r.i).join(' '), 10, 162);
     }
+  }
+};
+
+/* ═══════════════ BOONS (Recitation) ═══════════════ */
+const Boons = {
+  offer(){
+    R.phase = 'shop';
+    Audio.setMood('quiet');
+    // never offer the same boon twice unless the pool is exhausted
+    const taken = R.boons.map(b => b.id);
+    let pool = BOONS.filter(b => !taken.includes(b.id));
+    if (pool.length < 3) pool = BOONS.slice();
+    const picks = R.rng.shuffle(pool).slice(0, 3);
+    $('gm-title').textContent = `Level ${R.level - 1} recited`;
+    $('gm-body').innerHTML =
+      `<div style="text-align:center;color:var(--dim2);margin-bottom:14px">
+         ${R.levelCorrect}/${R.levelAnswered} correct · Hollowing ${Math.round(R.hollowing)}% ·
+         Integrity ${Math.round(R.hp)}/${R.maxHp}
+       </div>
+       <div class="choices">${picks.map((b,i)=>
+         `<button class="choice" data-i="${i}">
+            <span style="font-size:18px;margin-right:8px">${b.i}</span><b>${b.n}</b>
+            <span class="cflag">${b.d}</span></button>`).join('')}</div>`;
+    UI.openModal('modal-generic');
+    $$('#gm-body .choice').forEach(btn => btn.onclick = () => {
+      const b = picks[+btn.dataset.i];
+      R.boons.push(b);
+      try { b.f(); } catch(e){ console.warn(e); }
+      Audio.sfx('buy');
+      UI.closeModal('modal-generic');
+      HUD.update();
+      Ach.check({});
+      Run.nextLevel();
+    });
   }
 };
 
