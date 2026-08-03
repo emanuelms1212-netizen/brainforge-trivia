@@ -221,9 +221,18 @@ h1.title{font-family:var(--font-disp);font-size:clamp(40px,9.5vw,86px);color:var
 .abtn.correct{border-color:var(--green)!important;background:rgba(46,255,16,.14)!important;color:var(--green)!important}
 .abtn.wrong{border-color:var(--red)!important;background:rgba(255,34,34,.14)!important;color:var(--red)!important}
 .abtn.eliminated{opacity:.18;pointer-events:none;text-decoration:line-through}
-.abtn.hollowed{color:transparent!important;position:relative}
-.abtn.hollowed::after{content:'▓▒░ ERASED ░▒▓';position:absolute;left:34px;
-  font-family:var(--font-mono);font-size:12px;color:var(--purple);letter-spacing:.1em}
+/* Hollowing degrades legibility continuously — it never blanks an answer.
+   You can always still read something; it just gets harder to trust. */
+.abtn .atext{display:inline-block;transition:filter .5s ease,letter-spacing .5s ease}
+.abtn.decayed .atext{color:#c9b6e0}
+.q-txt.decayed{color:#d8cbe8}
+.decay-note{font-family:var(--font-mono);font-size:10.5px;color:var(--purple);
+  letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;opacity:.9}
+/* loud banner for question modifiers that change how you must READ or ANSWER */
+.mod-banner{background:rgba(168,85,247,.14);border:1px solid var(--purple);
+  border-left:4px solid var(--purple);border-radius:7px;padding:9px 12px;margin-bottom:12px}
+.mod-banner b{color:var(--purple);font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.mod-banner span{display:block;font-size:13px;color:var(--text);margin-top:2px;line-height:1.35}
 .abtn:disabled{cursor:default}
 .q-fb{min-height:34px;display:flex;align-items:center;justify-content:center;
   font-family:var(--font-mono);font-size:13.5px;font-weight:bold;text-align:center;padding:5px}
@@ -586,8 +595,10 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
       <div class="focus-track"><div class="focus-fill" id="focus-fill"></div></div>
       <span class="mono" style="font-size:10px;color:var(--dim)" id="focus-lbl">FOCUS</span>
     </div>
+    <div class="mod-banner" id="mod-banner" style="display:none"></div>
     <div class="qcard">
       <div class="q-cat" id="q-cat">General Knowledge</div>
+      <div class="decay-note" id="decay-note" style="display:none"></div>
       <div class="q-txt" id="q-txt">Loading…</div>
       <div class="timer-track"><div class="timer-fill" id="t-fill"></div></div>
       <div class="timer-lbl" id="t-lbl">15s</div>
@@ -3996,14 +4007,19 @@ const Trivia = {
     return Unlocks.has('cat_expert') ? 'expert' : 'hard';
   },
 
-  // Hollowing eats the interface progressively: time, then legibility.
-  // It never deletes an option outright — an unanswerable question is a
-  // trap, not tension. You can always still guess; you just lose information.
+  // Hollowing degrades legibility *continuously* rather than blanking
+  // options. Text blurs and characters rot a little more with every point,
+  // so it gets steadily worse if you never clear it — but even at 100% the
+  // answer is still there to be squinted at, not deleted.
   hollowState(){
     const h = R.hollowing;
+    const decay = clamp((h - 15) / 85, 0, 1);   // starts biting at 15%
     return {
       timeCut: h >= 60 ? 4 : h >= 25 ? 2 : 0,
-      erase:   h >= 80 ? 2 : h >= 40 ? 1 : 0,   // options made unreadable
+      decay,                                     // 0 → 1
+      blur:    decay * 2.7,                      // px
+      rot:     decay * 0.34,                     // fraction of chars corrupted
+      spread:  decay * 1.1,                      // letter-spacing wobble
       desat:   h >= 60
     };
   },
@@ -4019,7 +4035,8 @@ const Trivia = {
     const mods = [];
     const modChance = R.nightmare ? 0.55 : R.mode==='daily' ? 0.3 : 0.18;
     if (R.rng() < modChance){
-      const keys = Object.keys(MODIFIERS).filter(k=>k!=='sudden' || R.rng()<0.15);
+      const keys = Object.keys(MODIFIERS).filter(k =>
+        (k!=='sudden' || R.rng()<0.15) && (k!=='mirror' || R.rng()<0.3));
       mods.push(R.rng.pick(keys));
     }
     const spec = { time: (G.settings.timerSeconds + skillVal('r_time',1.5) + (R.bonusTime||0)) * R.timeMul,
@@ -4030,13 +4047,8 @@ const Trivia = {
     if (G.settings.assistSlowTimer) spec.time *= 1.4;
     R.questionMods = mods; R.spec = spec;
 
-    // build answers
-    let answers = R.rng.shuffle(q.a.slice());
-    const erasedIdx = [];
-    if (hs.erase > 0){
-      const idxs = R.rng.shuffle(answers.map((_,i)=>i));
-      for (let i = 0; i < Math.min(hs.erase, answers.length - 2); i++) erasedIdx.push(idxs[i]);
-    }
+    // build answers — every option survives, they just decay
+    const answers = R.rng.shuffle(q.a.slice());
 
     // drone / relic reveal
     let autoElim = [];
@@ -4046,7 +4058,7 @@ const Trivia = {
       autoElim = R.rng.shuffle(wrong).slice(0, Math.min(reveals, wrong.length-0)).map(o=>o.i);
     }
 
-    UI.renderQuestion(q, answers, { mods, spec, erasedIdx, autoElim, hs });
+    UI.renderQuestion(q, answers, { mods, spec, autoElim, hs });
     Trivia.startTimer(spec.time);
   },
 
@@ -4985,6 +4997,8 @@ const UI = {
     const done = () => { if (after) after(); };
     if (!G.settings.tutorials || G.story.seen['tip_'+key]){ done(); return; }
     G.story.seen['tip_'+key] = true; Save.write();
+    $('tut-off').style.display = '';   // Tutorial hides this; restore it
+    $('tut-ok').textContent = 'Got it';
     $('tut-title').textContent = title; $('tut-body').innerHTML = body;
     UI.openModal('modal-tut');
     $('tut-ok').onclick  = () => { UI.closeModal('modal-tut'); done(); };
@@ -4992,9 +5006,31 @@ const UI = {
                                    UI.closeModal('modal-tut'); done(); };
   },
 
+  /* ── legibility decay ───────────────────────────────────
+     Corrupts a fraction of characters into lookalikes. Paired with blur
+     this reads as the text rotting, while staying decipherable. */
+  ROT:{ a:'ä',b:'ҍ',c:'ċ',d:'ԁ',e:'ë',f:'ϝ',g:'ġ',h:'ĥ',i:'ï',j:'ĵ',k:'ĸ',l:'ĺ',m:'ṁ',
+        n:'ñ',o:'ö',p:'ρ',q:'q',r:'ŕ',s:'ş',t:'ţ',u:'ü',v:'ν',w:'ŵ',x:'χ',y:'ÿ',z:'ż',
+        A:'Å',B:'Ɓ',C:'Ċ',D:'Ð',E:'Ë',F:'Ƒ',G:'Ġ',H:'Ĥ',I:'Ï',J:'Ĵ',K:'Ҡ',L:'Ĺ',M:'Ṁ',
+        N:'Ñ',O:'Ö',P:'Ρ',Q:'Q',R:'Ŕ',S:'Ş',T:'Ţ',U:'Ü',V:'Ѵ',W:'Ŵ',X:'Χ',Y:'Ÿ',Z:'Ż' },
+  rot(text, amount){
+    if (amount <= 0.02) return text;
+    let out = '';
+    for (const ch of text){
+      const sub = UI.ROT[ch];
+      out += (sub && Math.random() < amount) ? sub : ch;
+    }
+    return out;
+  },
+  applyDecay(node, text, hs){
+    node.textContent = UI.rot(text, hs.rot);
+    node.style.filter = hs.blur > 0.05 ? `blur(${hs.blur.toFixed(2)}px)` : '';
+    node.style.letterSpacing = hs.spread > 0.05 ? `${hs.spread.toFixed(2)}px` : '';
+  },
+
   /* ── question rendering ─────────────────────────────── */
   renderQuestion(q, answers, o){
-    const { mods, spec, erasedIdx, autoElim, hs } = o;
+    const { mods, spec, autoElim, hs } = o;
     $('q-prog').textContent = `Q ${R.questionIndex+1} / ${R.questions.length}`;
     $('q-cat').textContent  = spec.fog ? '???' : q.cat;
     const dchip = $('q-diff');
@@ -5003,10 +5039,21 @@ const UI = {
     $('q-mods').innerHTML = mods.map(m =>
       `<span class="chip mod" title="${MODIFIERS[m].d}">${MODIFIERS[m].i} ${MODIFIERS[m].n}</span>`).join('');
     let text = q.q;
-    if (spec.mirror) text = text.split('').reverse().join('');
-    if (spec.reversed) text = '⚠ PICK THE WRONG ANSWER — ' + text;
+    if (spec.mirror)   text = text.split('').reverse().join('');
+    // Loud, unmissable banner. These two modifiers change what you are being
+    // asked to do, and a small chip was being read as the game malfunctioning.
+    const banner = $('mod-banner');
+    if (spec.mirror || spec.reversed){
+      banner.style.display = '';
+      banner.innerHTML = spec.reversed
+        ? `<b>🔄 Inverted — pick the WRONG answer</b>
+           <span>This question is scored backwards. The correct answer loses.</span>`
+        : `<b>🪞 Mirror — the question is written backwards</b>
+           <span>Read it right-to-left. The answers are unaffected. This is intentional.</span>`;
+    } else banner.style.display = 'none';
     const qt = $('q-txt');
-    qt.textContent = text;
+    UI.applyDecay(qt, text, { blur: hs.blur * 0.45, rot: hs.rot * 0.5, spread: 0 });
+    qt.classList.toggle('decayed', hs.decay > 0.25);
     qt.style.transition = 'none'; qt.style.opacity = 1;
     if (spec.blackout){ requestAnimationFrame(()=>{
       qt.style.transition = `opacity ${spec.time*0.55}s linear`; qt.style.opacity = 0.06; }); }
@@ -5018,8 +5065,9 @@ const UI = {
       b.dataset.ans = ans;
       const keyLbl = G.settings.showAnswerKeys && i < 4
         ? `<span class="key">${Keybind.label(G.settings.keys[keys[i]])}</span>` : '';
-      b.innerHTML = keyLbl + `<span class="atext">${ans}</span>`;
-      if (erasedIdx.includes(i)) b.classList.add('hollowed');
+      b.innerHTML = keyLbl + `<span class="atext"></span>`;
+      UI.applyDecay(b.querySelector('.atext'), ans, hs);
+      b.classList.toggle('decayed', hs.decay > 0.25);
       if (autoElim.includes(i)) b.classList.add('eliminated');
       if (spec.hidden){ b.style.color = 'transparent';
         b.onmouseenter = () => b.style.color = ''; b.onmouseleave = () => b.style.color='transparent'; }
@@ -5033,6 +5081,13 @@ const UI = {
       };
       grid.appendChild(b);
     });
+    const note = $('decay-note');
+    if (hs.decay > 0.12){
+      note.style.display = '';
+      note.textContent = hs.decay > 0.7 ? '▓ heavy hollowing — text is rotting · use Purge'
+                       : hs.decay > 0.4 ? '▒ hollowing is blurring the text'
+                       : '░ hollowing is setting in';
+    } else note.style.display = 'none';
     $('q-fb').textContent = ''; $('q-fb').className = 'q-fb';
     if (hs.desat) $('app').style.filter =
       `brightness(${G.settings.brightness}) contrast(${G.settings.contrast}) saturate(${1 - (R.hollowing-60)/80})`;
@@ -5077,6 +5132,10 @@ const UI = {
   revealAnswers(correct, sel, ok, spec){
     $$('#a-grid .abtn').forEach(b => {
       b.disabled = true; b.style.color = '';
+      // always show the truth undistorted once the question is over
+      const t = b.querySelector('.atext');
+      if (t){ t.textContent = b.dataset.ans; t.style.filter = ''; t.style.letterSpacing = ''; }
+      b.classList.remove('decayed');
       const isC = b.dataset.ans === correct;
       if (spec.silent) return;
       if (spec.reversed){ if (isC) b.classList.add('wrong'); }
@@ -5162,6 +5221,12 @@ const UI = {
       range('timerSeconds','Question Timer',5,30,1,v=>v+'s','Base seconds before skills and modifiers.');
       toggle('autosave','Auto-Save','Write progress after every level.');
       toggle('tutorials','Tutorial Tips','Show field notes the first time a mechanic appears.');
+      rows.push(`<div class="set-row"><div class="set-lbl">Replay Tutorial
+        <small>Run the guided walkthrough again from the start.</small></div>
+        <div class="set-ctl"><button class="btn btn-o btn-xs" id="btn-tut">Start</button></div></div>`);
+      rows.push(`<div class="set-row"><div class="set-lbl">Reset Tips
+        <small>Show every first-time field note again.</small></div>
+        <div class="set-ctl"><button class="btn btn-o btn-xs" id="btn-tipreset">Reset</button></div></div>`);
       toggle('subtitles','Subtitles','Narration text in story scenes.');
       toggle('showAnswerKeys','Show Answer Keys','Display 1–4 shortcuts on answers.');
       toggle('confirmAnswer','Confirm Answer','Tap once to arm, twice to commit.');
@@ -5250,6 +5315,11 @@ const UI = {
         : parseFloat(rn.value).toFixed(2)+'×';
       Settings.apply(); Save.write(); });
     $$('#set-body .keybind').forEach(b => b.onclick = () => Keybind.start(b.dataset.kb, b));
+    const tb = $('btn-tut'); if (tb) tb.onclick = () => Tutorial.start();
+    const tr = $('btn-tipreset'); if (tr) tr.onclick = () => {
+      Object.keys(G.story.seen).filter(k=>k.startsWith('tip_')).forEach(k=>delete G.story.seen[k]);
+      G.settings.tutorials = true; Save.write(); UI.renderSettings();
+      Toast.push('TIPS','Field notes reset','',''); };
     const fs = $('btn-fs'); if (fs) fs.onclick = () => {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
       else document.exitFullscreen?.(); };
@@ -5405,6 +5475,8 @@ const Menu = {
     const order = ['story','endless','recitation','notrivia','daily','weekly','bossrush','rogue',
                    'convoy','laststand','escape','outbreak','nightmare','hardcore','custom'];
     const extras = [
+      ['tutorial','🎓','Tutorial','A guided walkthrough of the whole loop.'],
+      ['help','❓','How To Play','Every mechanic, modifier and control explained.'],
       ['archive','📚','The Archive','Documents, logs and the truth, slowly.'],
       ['ach','🏆','Achievements',`${Ach.earned()} of ${ACHIEVEMENTS.length} unlocked.`],
       ['stats','📊','Statistics','Everything you have ever done, counted.'],
@@ -5509,6 +5581,8 @@ const Menu = {
   },
   extra(k){
     switch(k){
+      case 'tutorial': Tutorial.start(); break;
+      case 'help':     Help.open(); break;
       case 'archive':  UI.show('s-archive'); UI.renderArchive(); break;
       case 'ach':      UI.show('s-ach'); UI.renderAch(); break;
       case 'stats':    UI.show('s-stats'); UI.renderStats(); break;
@@ -5823,6 +5897,210 @@ const Shop = {
   }
 };
 
+/* ═══════════════ HELP ═══════════════ */
+const Help = {
+  tab:'basics',
+  open(){ UI.show('s-list');
+    $('list-title').textContent = 'How To Play';
+    $('list-sub').textContent = 'Everything the game does, explained';
+    Help.render(); },
+  render(){
+    const tabs = [['basics','Basics'],['hollow','The Hollowing'],['combat','Driving & Combat'],
+                  ['upgrades','Upgrades'],['skills','Skills'],['mods','Modifiers'],
+                  ['modes','Modes'],['controls','Controls']];
+    const sec = (title, body) =>
+      `<div class="card" style="margin-bottom:11px">
+         <div class="set-group-h">${title}</div>
+         <div style="line-height:1.62;font-size:14.5px">${body}</div></div>`;
+    let body = '';
+    if (Help.tab === 'basics') body =
+      sec('The premise',
+        `The Mnemosyne Array was built to back up everything humanity knows. It worked, then it
+         filled up — and a full archive with an open intake reclaims redundant copies. The
+         redundant copy is the one in <b>your head</b>.<br><br>
+         People who <b>rehearse</b> stay lucid. That is why answering questions is not a
+         minigame here: <b>recall is the immune response</b>.`) +
+      sec('A run, step by step',
+        `<b>1.</b> Answer a level of questions. Correct answers earn scrap and clear Hollowing;
+         wrong ones cost Integrity and raise it.<br>
+         <b>2.</b> Drive the wave. You steer and shoot; your upgrades fire alongside you.<br>
+         <b>3.</b> Spend scrap in the Salvage Bay, then the next level begins — harder.`) +
+      sec('The two bars',
+        `<b>Integrity</b> is health. At zero the run ends.<br>
+         <b>Hollowing</b> is how much of you the Array has taken. It rises on wrong answers and
+         falls on correct ones. At 100% you are hollowed out and the run ends.`) +
+      sec('Lucidity',
+        `Your accuracy across a level restores Integrity when you clear it. A clean sheet heals a
+         lot. Knowing things really does keep you alive.`);
+    if (Help.tab === 'hollow') body =
+      sec('What it does',
+        `Hollowing does not damage you directly — it eats the <b>interface</b>. The higher it
+         climbs, the harder the game is to <i>read</i>.`) +
+      `<div class="card" style="margin-bottom:11px"><div class="set-group-h">The slide</div>
+        <div class="st-row"><span class="st-k">From 15%</span><span class="st-v">text begins to blur and characters rot</span></div>
+        <div class="st-row"><span class="st-k">25%</span><span class="st-v">−2s on every timer</span></div>
+        <div class="st-row"><span class="st-k">60%</span><span class="st-v">−4s, and the colour drains</span></div>
+        <div class="st-row"><span class="st-k">100%</span><span class="st-v">hollowed out — the run ends</span></div></div>` +
+      sec('It never hides the answer',
+        `However bad it gets, all four options stay on screen and stay clickable. The text
+         distorts; it is never blanked. You can always squint and commit.`) +
+      sec('Clearing it',
+        `Every correct answer pushes it back a little. The <b>🧼 Purge</b> consumable clears 22
+         at once. In the skill tree, <b>Anchored Self</b> slows the gain and <b>Rehearsal</b>
+         increases what each correct answer clears.`);
+    if (Help.tab === 'combat') body =
+      sec('You drive',
+        `<b>Drag the road</b> on a touchscreen, or use the movement keys. The car moves
+         vertically; hold to fire. Your gun works with <b>no upgrades at all</b>.`) +
+      sec('Dodging is real',
+        `Contact only happens when you and a Hollow actually overlap vertically. Sitting at the
+         far edge of the road genuinely avoids a pass.`) +
+      sec('Ramming',
+        `Driving into a Hollow lands <b>one</b> strike, not continuous damage. Whether that kills
+         it depends on your <b>Spike Ram</b>. Without one, weak Hollow survive the hit and get to
+         hurt you — so you have to shoot.`) +
+      sec('Focus and Overdrive',
+        `Correct answers build <b>Focus</b>. Fill it and, with the Overdrive skill, the next wave
+         starts with doubled damage.`);
+    if (Help.tab === 'upgrades') body =
+      sec('How they unlock',
+        `Upgrades unlock as a run goes on, so the rig is built up rather than bought at once.
+         Three are available at level 1, rising to nine by level 8. The last three also need
+         career progress across all your runs.`) +
+      `<div class="card"><div class="set-group-h">All twelve</div>${
+        Object.keys(UPGRADES).map(k=>{ const u=UPGRADES[k];
+          return `<div class="st-row"><span class="st-k">${u.icon} <b>${u.name}</b> — ${u.desc}</span>
+            <span class="st-v">Lv ${u.req||1}${u.metaLabel?' · '+u.metaLabel:''}</span></div>`; }).join('')}</div>`;
+    if (Help.tab === 'skills') body =
+      sec('Doctrine',
+        `Skill points come from levelling your profile and are <b>permanent</b> — they carry
+         across every run and every mode. Spend them in the Skill Tree.`) +
+      SKILL_BRANCHES.map(br =>
+        `<div class="card" style="margin-bottom:11px"><div class="set-group-h">${br.icon} ${br.name}</div>
+          <div style="color:var(--dim2);margin-bottom:6px">${br.blurb}</div>
+          ${SKILLS.filter(s=>s.b===br.id).map(s=>
+            `<div class="st-row"><span class="st-k">${s.i} <b>${s.n}</b> — ${s.d(1)}</span>
+             <span class="st-v">${s.max} ranks</span></div>`).join('')}</div>`).join('');
+    if (Help.tab === 'mods') body =
+      sec('Question modifiers',
+        `Individual questions sometimes carry a modifier, shown as a chip above the card. Two of
+         them change how you must <b>read or answer</b>, and those show a full-width purple
+         banner so they cannot be mistaken for a glitch:`) +
+      `<div class="card" style="margin-bottom:11px"><div class="set-group-h">The two loud ones</div>
+        <div class="st-row"><span class="st-k">🪞 <b>Mirror</b></span>
+          <span class="st-v">The question text is written backwards — read right-to-left. Deliberate, not a bug.</span></div>
+        <div class="st-row"><span class="st-k">🔄 <b>Inverted</b></span>
+          <span class="st-v">Pick the WRONG answer. Scoring is reversed.</span></div></div>` +
+      `<div class="card" style="margin-bottom:11px"><div class="set-group-h">All modifiers</div>${
+        Object.keys(MODIFIERS).map(k=>{ const m=MODIFIERS[k];
+          return `<div class="st-row"><span class="st-k">${m.i} <b>${m.n}</b></span>
+            <span class="st-v">${m.d}</span></div>`; }).join('')}</div>` +
+      `<div class="card"><div class="set-group-h">Whole-run rules</div>${
+        Object.keys(RUN_MODS).map(k=>`<div class="st-row"><span class="st-k"><b>${RUN_MODS[k].n}</b></span>
+          <span class="st-v">${RUN_MODS[k].d}</span></div>`).join('')}</div>`;
+    if (Help.tab === 'modes') body =
+      `<div class="card">${Object.keys(MODES).map(k=>{ const m=MODES[k];
+        return `<div class="st-row"><span class="st-k">${m.icon} <b>${m.name}</b> — ${m.desc}</span>
+          <span class="st-v">${m.unlock()?'✓':'🔒'}</span></div>`; }).join('')}</div>`;
+    if (Help.tab === 'controls'){
+      const K = G.settings.keys;
+      body = sec('Touch',
+        `<b>Drag the road</b> to steer · hold to fire · tap an answer to pick it
+         (turn on <i>Confirm Answer</i> in Settings if you tap by accident).`) +
+      `<div class="card" style="margin-bottom:11px"><div class="set-group-h">Keyboard</div>
+        ${[['Answers 1–4',`${Keybind.label(K.a1)} ${Keybind.label(K.a2)} ${Keybind.label(K.a3)} ${Keybind.label(K.a4)}`],
+           ['Steer', `${Keybind.label(K.up)} / ${Keybind.label(K.down)}`],
+           ['Fire / advance', Keybind.label(K.fire)],
+           ['Pause', Keybind.label(K.pause)],
+           ['50/50', 'F'], ['Freeze timer', 'G']].map(([a,b2])=>
+          `<div class="st-row"><span class="st-k">${a}</span><span class="st-v">${b2}</span></div>`).join('')}
+        <div style="color:var(--dim2);margin-top:8px">All rebindable under Settings → Controls.</div></div>` +
+      sec('Struggling?',
+        `Settings → Gameplay has <b>Assist: Extra Time</b> (+40% on every timer, no penalty) and a
+         <b>Story</b> difficulty. Settings → Accessibility has colourblind palettes, a
+         dyslexia-friendly font, text scaling, and a switch to turn the Hollowing distortion off
+         entirely if it is too much.`);
+    }
+    $('list-body').innerHTML =
+      `<div class="tabs">${tabs.map(([k,n])=>
+        `<button class="tab ${Help.tab===k?'active':''}" data-k="${k}">${n}</button>`).join('')}</div>` +
+      body;
+    $$('#list-body .tab').forEach(b => b.onclick = () => {
+      Help.tab = b.dataset.k; Audio.sfx('click'); Help.render(); });
+  }
+};
+
+/* ═══════════════ TUTORIAL ═══════════════ */
+const Tutorial = {
+  step:0,
+  start(){
+    G.story.seen.tutorialDone = true; Save.write();
+    Run.create('endless', {});
+    // must stay endless — a levelsTarget of 1 ends the run at Results before
+    // the player ever reaches the shop step
+    R.tutorial = true; R.endless = true; R.levelsTarget = 0;
+    R.enemyPool = ['shambler'];
+    UI.stack = ['s-menu'];
+    Tutorial.step = 0;
+    Tutorial.say('Welcome to the road',
+      `You survived because you rehearse — you say things out loud and they stay.<br><br>
+       This is a short walkthrough. Five questions, one wave, one shop. Nothing here can kill you.`,
+      () => { R.hp = R.maxHp = 999; Run.begin(); Tutorial.watch(); });
+  },
+  say(title, body, after){
+    $('tut-title').textContent = title;
+    $('tut-body').innerHTML = body;
+    UI.openModal('modal-tut');
+    $('tut-ok').textContent = 'Got it';
+    $('tut-off').style.display = 'none';
+    $('tut-ok').onclick = () => { UI.closeModal('modal-tut'); if (after) after(); };
+  },
+  // fires contextual explanations as the player reaches each phase
+  watch(){
+    if (!R || !R.tutorial) return;
+    const seen = Tutorial._seen = Tutorial._seen || {};
+    const iv = setInterval(() => {
+      if (!R || !R.tutorial){ clearInterval(iv); return; }
+      if (R.phase === 'trivia' && !seen.trivia){
+        seen.trivia = true;
+        Tutorial.say('The question card',
+          `Pick the right answer before the timer runs out.<br><br>
+           <b>Correct</b> — scrap, Focus, and Hollowing goes <i>down</i>.<br>
+           <b>Wrong</b> — Integrity damage, and Hollowing goes <i>up</i>.<br><br>
+           Hollowing blurs and rots the text as it climbs. It never hides an answer, but it makes
+           you doubt what you are reading. The <b>🧼 Purge</b> button clears it.`);
+      }
+      if (R.phase === 'action' && !seen.action){
+        seen.action = true;
+        Tutorial.say('The road',
+          `Now you drive. <b>${matchMedia('(pointer:coarse)').matches
+            ? 'Drag anywhere on the road to steer, and hold to fire'
+            : 'W/S to steer, Space to fire'}</b>.<br><br>
+           Your gun works with no upgrades. Moving to the far edge of the road genuinely dodges —
+           contact needs you to actually overlap.`);
+      }
+      if (R.phase === 'shop' && !seen.shop){
+        seen.shop = true;
+        Tutorial.say('The Salvage Bay',
+          `Spend scrap here. Each upgrade changes how the car is <b>drawn</b> as well as how it
+           fights.<br><br>
+           Only three are available this early — more unlock as a run goes on, and the last few
+           need career progress across all your runs.<br><br>
+           <b>Skill points</b> are separate and permanent; spend those in the Skill Tree.`,
+          () => { clearInterval(iv); Tutorial.finish(); });
+      }
+    }, 400);
+    Tutorial._iv = iv;
+  },
+  finish(){
+    Tutorial.say('That is the whole loop',
+      `Questions, road, shop, repeat — harder each time.<br><br>
+       Everything is explained in more depth under <b>How To Play</b> on the main menu.<br><br>
+       Say it out loud. It only works out loud.`,
+      () => { R.tutorial = false; UI.toMenu(); });
+  }
+};
+
 /* ═══════════════ BOONS (Recitation) ═══════════════ */
 const Boons = {
   offer(){
@@ -5923,6 +6201,7 @@ const Pause = {
       ['📊','Character', ()=>Pause.character()],
       ['🏆','Achievements', ()=>{ Pause.close(); UI.show('s-ach'); UI.renderAch(); }],
       ['📚','Archive', ()=>{ Pause.close(); UI.show('s-archive'); UI.renderArchive(); }],
+      ['❓','How To Play', ()=>{ Pause.close(); Help.open(); }],
       ['⚙️','Settings', ()=>{ Pause.close(); UI.show('s-settings'); UI.renderSettings(); }],
       ['📷','Photo Mode', ()=>Pause.photo()],
       ['🔄','Restart', ()=>UI.confirm('Restart',
